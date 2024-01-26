@@ -1,0 +1,11 @@
+{
+  "name": "auto-resource-redux",
+  "version": "0.0.1",
+  "title": "Auto Resource Redux",
+  "author": "Samarara",
+  "factorio_version": "1.1",
+  "dependencies": [
+      "base >= 1.1"
+  ],
+  "description": "Automatic resource distribution between machines - for RTS like/combat focused gameplay"
+}
