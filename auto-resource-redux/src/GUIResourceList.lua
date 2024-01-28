@@ -46,7 +46,7 @@ local function update_gui(player)
         name = button_name,
         sprite = fluid_name and "fluid/" .. fluid_name or "item/" .. storage_key,
         tags = { event = RES_BUTTON_EVENT, item = storage_key, flash_anim = 0 },
-      })
+        }
     end
 
     local num_vals, sum, min, max
@@ -168,6 +168,6 @@ local function on_button_clicked(event, tags, player)
   end
 end
 
-GUIDispatcher.register(GUIDispatcher.ON_CLICK, RES_BUTTON_EVENT, on_button_clicked)
+GUIDispatcher.register(defines.events.on_gui_click, RES_BUTTON_EVENT, on_button_clicked)
 
 return GUIResourceList

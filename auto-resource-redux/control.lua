@@ -56,5 +56,6 @@ script.on_event(defines.events.script_raised_destroy, EntityManager.on_entity_re
 script.on_event(defines.events.on_entity_died, EntityManager.on_entity_died)
 
 -- gui
-script.on_event(defines.events.on_gui_click, GUIDispatcher.on_click)
+script.on_event(defines.events.on_gui_click, GUIDispatcher.on_event)
+script.on_event(defines.events.on_gui_closed, GUIDispatcher.on_event)
 
