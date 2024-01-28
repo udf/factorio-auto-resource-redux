@@ -19,7 +19,7 @@ function GUIDispatcher.on_click(event)
   end
   local handler = registered_events[GUIDispatcher.ON_CLICK][event_tag]
   if handler then
-    handler(event, tags)
+    handler(event, tags, game.get_player(event.player_index))
   end
 end
 

@@ -40,15 +40,13 @@ local function update_gui(player)
     local button_name = "arr-res-" .. storage_key
     local button = table_elem[button_name]
     local fluid_name = Storage.unpack_fluid_item_name(storage_key)
-    local is_new = false
     if button == nil then
       button = table_elem.add({
         type = "sprite-button",
         name = button_name,
         sprite = fluid_name and "fluid/" .. fluid_name or "item/" .. storage_key,
-        tags = { event = RES_BUTTON_EVENT, item = storage_key },
+        tags = { event = RES_BUTTON_EVENT, item = storage_key, flash_anim = 0 },
       })
-      is_new = true
     end
 
     local num_vals, sum, min, max
@@ -101,8 +99,12 @@ local function update_gui(player)
       end
       table.insert(tooltip, table.concat(qty_strs))
     end
-    -- TODO: flash more than once
-    button.toggled = (is_new and quantity > 0)
+    button.toggled = button.tags.flash_anim % 2 == 0
+    if button.tags.flash_anim <= 2 then
+      local tags = button.tags
+      tags.flash_anim = tags.flash_anim + 1
+      button.tags = tags
+    end
     button.number = quantity
     button.tooltip = tooltip
     button.style = is_red and "red_slot_button" or "slot_button"
@@ -122,7 +124,7 @@ function GUIResourceList.on_tick()
   end
 end
 
-local function on_button_clicked(event, tags)
+local function on_button_clicked(event, tags, player)
   local storage_key = tags.item
   local click_str = GUICommon.get_click_str(event)
   local player = game.get_player(event.player_index)
