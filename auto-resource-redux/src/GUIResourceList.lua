@@ -3,8 +3,11 @@ local Util = require "src.Util"
 local GUICommon = require "src.GUICommon"
 local Storage = require "src.Storage"
 local ItemPriorityManager = require "src.ItemPriorityManager"
+local GUIDispatcher = require "src.GUIDispatcher"
+
 
 local TICKS_PER_UPDATE = 12
+local RES_BUTTON_EVENT = "arr-res-btn"
 -- "arr" stands for auto resource redux, matey
 local GUI_RESOURCE_TABLE = "arr-table"
 local COLOUR_END = "[/color]"
@@ -14,10 +17,8 @@ local COLOUR_GREEN = "[color=green]"
 local FONT_END = "[/font]"
 local FONT_BOLD = "[font=default-bold]"
 
-
 -- TODO: ctrl-click/middle click to set limit
 -- TODO: ctrl-right click to go to last pickup location?
--- TODO: use request_translation for item names
 local function update_gui(player)
   local storage = Storage.get_storage(player)
 
@@ -35,16 +36,17 @@ local function update_gui(player)
     table_elem.clear()
   end
 
-  for item_name, count in pairs(storage.items) do
-    local button_name = "arr-res-" .. item_name
+  for storage_key, count in pairs(storage.items) do
+    local button_name = "arr-res-" .. storage_key
     local button = table_elem[button_name]
-    local fluid_name = Storage.unpack_fluid_item_name(item_name)
+    local fluid_name = Storage.unpack_fluid_item_name(storage_key)
     local is_new = false
     if button == nil then
       button = table_elem.add({
         type = "sprite-button",
         name = button_name,
-        sprite = fluid_name and "fluid/" .. fluid_name or "item/" .. item_name,
+        sprite = fluid_name and "fluid/" .. fluid_name or "item/" .. storage_key,
+        tags = { event = RES_BUTTON_EVENT, item = storage_key },
       })
       is_new = true
     end
@@ -55,11 +57,11 @@ local function update_gui(player)
     end
 
     local quantity = min or count
-    local item_limit = Storage.get_item_limit(storage, item_name) or 0
+    local item_limit = Storage.get_item_limit(storage, storage_key) or 0
     local is_red = quantity / item_limit < 0.01
     local tooltip = {
       "", FONT_BOLD, COLOUR_LABEL,
-      { fluid_name and "fluid-name." .. fluid_name or "item-name." .. item_name },
+      { fluid_name and "fluid-name." .. fluid_name or "item-name." .. storage_key },
       COLOUR_END,
       "\n",
       (is_red and COLOUR_RED or ""), (min or count), (is_red and COLOUR_END or ""),
@@ -120,39 +122,35 @@ function GUIResourceList.on_tick()
   end
 end
 
-function GUIResourceList.on_click(event)
-  -- TODO: use tags instead of parsing element name
-  local item_name = string.match(event.element.name, "^arr%-res%-(.+)")
-  -- click to take, or right click to clear (if 0)
-  if item_name == nil then
-    return
-  end
+local function on_button_clicked(event, tags)
+  local storage_key = tags.item
   local click_str = GUICommon.get_click_str(event)
   local player = game.get_player(event.player_index)
+  -- click to take, or right click to clear (if 0)
   local storage = Storage.get_storage(player)
-  local is_fluid = Storage.unpack_fluid_item_name(item_name)
+  local is_fluid = Storage.unpack_fluid_item_name(storage_key)
   if click_str == "right" and is_fluid then
-    storage.items[item_name] = Util.table_filter(
-      storage.items[item_name],
+    storage.items[storage_key] = Util.table_filter(
+      storage.items[storage_key],
       function(k, v)
         return v >= 1
       end
     )
   end
   if click_str == "right" and (
-        storage.items[item_name] == 0
-        or (is_fluid and table_size(storage.items[item_name]) == 0)
+        storage.items[storage_key] == 0
+        or (is_fluid and table_size(storage.items[storage_key]) == 0)
       ) then
     event.element.destroy()
-    storage.items[item_name] = nil
+    storage.items[storage_key] = nil
     ItemPriorityManager.recalculate_priority_items(storage, Storage)
     return
   end
   if is_fluid then
     return
   end
-  local stored_count = storage.items[item_name] or 0
-  local stack_size = (game.item_prototypes[item_name] or {}).stack_size or 50
+  local stored_count = storage.items[storage_key] or 0
+  local stack_size = (game.item_prototypes[storage_key] or {}).stack_size or 50
   local amount_to_give = ({
     ["left"] = 1,
     ["right"] = 5,
@@ -163,9 +161,11 @@ function GUIResourceList.on_click(event)
   })[click_str] or 1
   amount_to_give = Util.clamp(amount_to_give, 0, stored_count)
   if amount_to_give > 0 then
-    Storage.put_in_inventory(storage, player.get_inventory(defines.inventory.character_main), item_name, amount_to_give)
+    Storage.put_in_inventory(storage, player.get_inventory(defines.inventory.character_main), storage_key, amount_to_give)
     update_gui(player)
   end
 end
+
+GUIDispatcher.register(GUIDispatcher.ON_CLICK, RES_BUTTON_EVENT, on_button_clicked)
 
 return GUIResourceList

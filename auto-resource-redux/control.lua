@@ -8,6 +8,8 @@ local EntityManager = require "src.EntityManager"
 local LogisticManager = require("src.LogisticManager")
 local ItemPriorityManager = require "src.ItemPriorityManager"
 local GUIResourceList = require "src.GUIResourceList"
+local GUIDispatcher = require "src.GUIDispatcher"
+
 
 local initialised = false
 
@@ -38,10 +40,6 @@ local function on_tick()
   GUIResourceList.on_tick()
 end
 
-local function on_gui_click(event)
-  GUIResourceList.on_click(event)
-end
-
 script.on_nth_tick(1, on_tick)
 
 -- create
@@ -58,4 +56,5 @@ script.on_event(defines.events.script_raised_destroy, EntityManager.on_entity_re
 script.on_event(defines.events.on_entity_died, EntityManager.on_entity_died)
 
 -- gui
-script.on_event(defines.events.on_gui_click, on_gui_click)
+script.on_event(defines.events.on_gui_click, GUIDispatcher.on_click)
+
