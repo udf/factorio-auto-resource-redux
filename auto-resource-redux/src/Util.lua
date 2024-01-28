@@ -81,6 +81,18 @@ function Util.table_sum_vals(dict)
   return sum
 end
 
+--- Extends the dest array with the contents of the src array
+---@param dest table The destination array (will be modified)
+---@param src table The source array
+---@return table dest The destination array
+function Util.array_extend(dest, src)
+  local insert = table.insert
+  for _, v in ipairs(src) do
+    insert(dest, v)
+  end
+  return dest
+end
+
 --- Gets the next key+value pair from t that was fetched at least min_tick_diff ticks ago
 ---@param state_key string The key to use when storing the timing state in global
 ---@param min_tick_diff integer Minimum number of ticks for an item to be considered out of date

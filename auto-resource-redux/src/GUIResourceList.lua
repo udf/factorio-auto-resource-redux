@@ -7,6 +7,12 @@ local ItemPriorityManager = require "src.ItemPriorityManager"
 local TICKS_PER_UPDATE = 12
 -- "arr" stands for auto resource redux, matey
 local GUI_RESOURCE_TABLE = "arr-table"
+local COLOUR_END = "[/color]"
+local COLOUR_LABEL = "[color=#e6d0ae]"
+local COLOUR_RED = "[color=red]"
+local COLOUR_GREEN = "[color=green]"
+local FONT_END = "[/font]"
+local FONT_BOLD = "[font=default-bold]"
 
 
 -- TODO: ctrl-click/middle click to set limit
@@ -16,26 +22,26 @@ local function update_gui(player)
   local storage = Storage.get_storage(player)
 
   local gui_top = player.gui.top
-  local table = gui_top[GUI_RESOURCE_TABLE]
-  if table == nil then
-    table = gui_top.add({
+  local table_elem = gui_top[GUI_RESOURCE_TABLE]
+  if table_elem == nil then
+    table_elem = gui_top.add({
       type = "table",
       column_count = 28,
       name = GUI_RESOURCE_TABLE
     })
   end
 
-  if #table.children > table_size(storage.items) then
-    table.clear()
+  if #table_elem.children > table_size(storage.items) then
+    table_elem.clear()
   end
 
   for item_name, count in pairs(storage.items) do
     local button_name = "arr-res-" .. item_name
-    local button = table[button_name]
+    local button = table_elem[button_name]
     local fluid_name = Storage.unpack_fluid_item_name(item_name)
     local is_new = false
     if button == nil then
-      button = table.add({
+      button = table_elem.add({
         type = "sprite-button",
         name = button_name,
         sprite = fluid_name and "fluid/" .. fluid_name or "item/" .. item_name,
@@ -51,32 +57,35 @@ local function update_gui(player)
     local quantity = min or count
     local item_limit = Storage.get_item_limit(storage, item_name) or 0
     local is_red = quantity / item_limit < 0.01
-    local tooltip = string.format(
-      "[color=#e6d0ae][font=default-bold]%s[/font][/color]\n[font=default-bold]%s%d%s[/font]/%d",
-      fluid_name or item_name,
-      is_red and "[color=red]" or "",
-      min or count,
-      is_red and "[/color]" or "",
-      item_limit
-    )
+    local tooltip = {
+      "", FONT_BOLD, COLOUR_LABEL,
+      { fluid_name and "fluid-name." .. fluid_name or "item-name." .. item_name },
+      COLOUR_END,
+      "\n",
+      (is_red and COLOUR_RED or ""), (min or count), (is_red and COLOUR_END or ""),
+      "/", item_limit,
+      FONT_END
+    }
+    -- List the levels of each fluid temperature
     if fluid_name then
       if num_vals > 1 then
-        tooltip = (
-          tooltip ..
-          string.format("\n[color=#e6d0ae][font=default-bold]Total[/font][/color]: %d", sum)
+        Util.array_extend(
+          tooltip,
+          { "\n", COLOUR_LABEL, FONT_BOLD, { "gui.total" }, FONT_END, COLOUR_END, ": ", sum }
         )
       end
       local i = 0
+      local qty_strs = {}
       local wrap = math.max(1, math.floor(num_vals / 10))
       for temperature, qty in pairs(count) do
         local colour_tag = nil
         if is_red and qty == min then
-          colour_tag = "[color=red]"
+          colour_tag = COLOUR_RED
         elseif qty == max then
-          colour_tag = "[color=green]"
+          colour_tag = COLOUR_GREEN
         end
-        tooltip = (
-          tooltip ..
+        table.insert(
+          qty_strs,
           string.format(
             "%s[color=#e6d0ae][font=default-bold]%d°C[/font][/color]: %s%d%s",
             i % wrap == 0 and "\n" or ", ",
@@ -88,6 +97,7 @@ local function update_gui(player)
         )
         i = i + 1
       end
+      table.insert(tooltip, table.concat(qty_strs))
     end
     -- TODO: flash more than once
     button.toggled = (is_new and quantity > 0)
