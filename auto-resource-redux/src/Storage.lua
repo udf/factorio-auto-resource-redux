@@ -12,14 +12,18 @@ local blacklisted_item_types = {
   ["blueprint-book"] = true,
   ["spidertron-remote"] = true
 }
+
 local DEFAULT_FLUID_LIMIT = 25000
--- number of stacks for the default item limits
+Storage.MAX_FLUID_LIMIT = 100000
+Storage.MAX_ITEM_LIMIT = 10000
+-- number of stacks for the default limits (per item subgroup)
 local default_item_subgroup_stacks = {
-  ["raw-resource"] = 40,
+  ["raw-resource"] = 200,
   ["raw-material"] = 10,
   ["intermediate-product"] = 2.5,
   ["energy-pipe-distribution"] = 2,
   ["terrain"] = 10,
+  ["ammo"] = 5
 }
 
 -- TODO: loading stuff into local variable might cause desync
@@ -69,7 +73,7 @@ local function get_default_item_limit(storage_key)
   local prototype = (game.item_prototypes[storage_key] or {})
   local stack_size = prototype.default_request_amount or prototype.stack_size or 1
   local subgroup = (prototype.subgroup or {}).name
-  return math.ceil(stack_size * (default_item_subgroup_stacks[subgroup] or 1))
+  return math.min(Storage.MAX_ITEM_LIMIT, math.ceil(stack_size * (default_item_subgroup_stacks[subgroup] or 1)))
 end
 
 function Storage.get_item_limit(storage, storage_key)
@@ -82,6 +86,15 @@ function Storage.get_item_limit(storage, storage_key)
     storage.limits[storage_key] = limit
   end
   return limit
+end
+
+function Storage.set_item_limit(storage, storage_key, new_limit)
+  if blacklisted_items[storage_key] ~= nil then
+    return
+  end
+  local fluid_name = Storage.unpack_fluid_item_name(storage_key)
+  local max_limit = fluid_name and Storage.MAX_FLUID_LIMIT or Storage.MAX_ITEM_LIMIT
+  storage.limits[storage_key] = Util.clamp(new_limit, 0, max_limit)
 end
 
 function Storage.filter_items(storage, storage_keys, min_qty, use_qty_from_filters)
@@ -159,7 +172,7 @@ function Storage.put_in_inventory(storage, inventory, item_name, amount_requeste
 end
 
 function Storage.add_to_or_replace_stack(storage, stack, item_name, target_count, ignore_limit)
-    -- try to clear if the item is different
+  -- try to clear if the item is different
   local stack_count = stack.count
   if stack_count > 0 and stack.name ~= item_name then
     local amount_removed = add_item_or_fluid(storage, stack.name, stack_count, ignore_limit)

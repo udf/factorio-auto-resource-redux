@@ -1,15 +1,14 @@
 local GUIResourceList = {}
 local Util = require "src.Util"
-local GUICommon = require "src.GUICommon"
 local Storage = require "src.Storage"
 local ItemPriorityManager = require "src.ItemPriorityManager"
+local GUICommon = require "src.GUICommon"
 local GUIDispatcher = require "src.GUIDispatcher"
+local GUILimitDialog = require "src.GUILimitDialog"
 
 
 local TICKS_PER_UPDATE = 12
 local RES_BUTTON_EVENT = "arr-res-btn"
--- "arr" stands for auto resource redux, matey
-local GUI_RESOURCE_TABLE = "arr-table"
 local COLOUR_END = "[/color]"
 local COLOUR_LABEL = "[color=#e6d0ae]"
 local COLOUR_RED = "[color=red]"
@@ -17,18 +16,17 @@ local COLOUR_GREEN = "[color=green]"
 local FONT_END = "[/font]"
 local FONT_BOLD = "[font=default-bold]"
 
--- TODO: ctrl-click/middle click to set limit
 -- TODO: ctrl-right click to go to last pickup location?
 local function update_gui(player)
   local storage = Storage.get_storage(player)
 
   local gui_top = player.gui.top
-  local table_elem = gui_top[GUI_RESOURCE_TABLE]
+  local table_elem = gui_top[GUICommon.GUI_RESOURCE_TABLE]
   if table_elem == nil then
     table_elem = gui_top.add({
       type = "table",
       column_count = 28,
-      name = GUI_RESOURCE_TABLE
+      name = GUICommon.GUI_RESOURCE_TABLE
     })
   end
 
@@ -37,16 +35,18 @@ local function update_gui(player)
   end
 
   for storage_key, count in pairs(storage.items) do
-    local button_name = "arr-res-" .. storage_key
-    local button = table_elem[button_name]
+    local button = table_elem[storage_key]
     local fluid_name = Storage.unpack_fluid_item_name(storage_key)
     if button == nil then
-      button = table_elem.add({
-        type = "sprite-button",
-        name = button_name,
-        sprite = fluid_name and "fluid/" .. fluid_name or "item/" .. storage_key,
-        tags = { event = RES_BUTTON_EVENT, item = storage_key, flash_anim = 0 },
+      button = GUICommon.create_item_button(
+        table_elem,
+        storage_key,
+        {
+          name = storage_key,
+          tags = { event = RES_BUTTON_EVENT, item = storage_key, flash_anim = 0 },
+          mouse_button_filter = { "left", "right", "middle" },
         }
+      )
     end
 
     local num_vals, sum, min, max
@@ -99,8 +99,8 @@ local function update_gui(player)
       end
       table.insert(tooltip, table.concat(qty_strs))
     end
-    button.toggled = button.tags.flash_anim % 2 == 0
-    if button.tags.flash_anim <= 2 then
+    if button.tags.flash_anim <= 3 then
+      button.toggled = button.tags.flash_anim % 2 == 0
       local tags = button.tags
       tags.flash_anim = tags.flash_anim + 1
       button.tags = tags
@@ -127,7 +127,12 @@ end
 local function on_button_clicked(event, tags, player)
   local storage_key = tags.item
   local click_str = GUICommon.get_click_str(event)
-  local player = game.get_player(event.player_index)
+
+  if click_str == "middle" then
+    GUILimitDialog.open(player, storage_key, event.cursor_display_location)
+    return
+  end
+
   -- click to take, or right click to clear (if 0)
   local storage = Storage.get_storage(player)
   local is_fluid = Storage.unpack_fluid_item_name(storage_key)

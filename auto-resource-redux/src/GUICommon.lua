@@ -1,4 +1,10 @@
 local GUICommon = {}
+local Storage = require "src.Storage"
+
+-- "arr" stands for auto resource redux, matey
+GUICommon.GUI_RESOURCE_TABLE = "arr-table"
+GUICommon.GUI_LIMIT_DIALOG   = "arr-limit-diag"
+
 
 local mouse_button_str = {
   [defines.mouse_button_type.left] = "left",
@@ -18,6 +24,18 @@ function GUICommon.get_click_str(event)
     str = "alt-" .. str
   end
   return str .. (mouse_button_str[event.button] or "none")
+end
+
+function GUICommon.create_item_button(parent, storage_key, new_attrs)
+  local fluid_name = Storage.unpack_fluid_item_name(storage_key)
+  local attrs = {
+    type = "sprite-button",
+    sprite = fluid_name and "fluid/" .. fluid_name or "item/" .. storage_key,
+  }
+  for k, v in pairs(new_attrs) do
+    attrs[k] = v
+  end
+  return parent.add(attrs)
 end
 
 return GUICommon

@@ -58,4 +58,6 @@ script.on_event(defines.events.on_entity_died, EntityManager.on_entity_died)
 -- gui
 script.on_event(defines.events.on_gui_click, GUIDispatcher.on_event)
 script.on_event(defines.events.on_gui_closed, GUIDispatcher.on_event)
-
+script.on_event(defines.events.on_gui_value_changed, GUIDispatcher.on_event)
+script.on_event(defines.events.on_gui_text_changed, GUIDispatcher.on_event)
+script.on_event(GUIDispatcher.ON_CONFIRM, GUIDispatcher.on_event)
