@@ -1,4 +1,5 @@
 local GUICommon = {}
+local Util = require "src.Util"
 local Storage = require "src.Storage"
 
 -- "arr" stands for auto resource redux, matey
@@ -28,14 +29,11 @@ end
 
 function GUICommon.create_item_button(parent, storage_key, new_attrs)
   local fluid_name = Storage.unpack_fluid_item_name(storage_key)
-  local attrs = {
+  local default_attrs = {
     type = "sprite-button",
     sprite = fluid_name and "fluid/" .. fluid_name or "item/" .. storage_key,
   }
-  for k, v in pairs(new_attrs) do
-    attrs[k] = v
-  end
-  return parent.add(attrs)
+  return parent.add(Util.table_merge(default_attrs, new_attrs))
 end
 
 return GUICommon

@@ -24,6 +24,17 @@ function Util.dictionary_merge(dest, src)
   return dest
 end
 
+--- Merges two tables, overwrites existing keys in dest
+---@param dest table The table to add keys to, this table will be modified
+---@param src table The table to get keys from
+---@return table dest The destination table
+function Util.table_merge(dest, src)
+  for k, v in pairs(src) do
+    dest[k] = v
+  end
+  return dest
+end
+
 --- Returns the keys from dict as an array
 ---@param dict table The table to get keys from
 ---@return table keys The array of keys from dict
