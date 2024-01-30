@@ -31,9 +31,17 @@ function GUIDispatcher.on_event(event)
   local player = game.get_player(event.player_index)
   local tags = (event.element or {}).tags or {}
   local event_name = event.input_name or event.name
-  local handler = registered_tagged_events[event_name][tags['event']]
-  if handler then
-    handler(event, tags, player)
+  local event_tags = tags['event']
+  if type(event_tags) == "string" then
+    event_tags = { [event_tags] = true }
+  end
+  if event_tags then
+    for event_tag, _ in pairs(event_tags) do
+      local handler = registered_tagged_events[event_name][event_tag]
+      if handler then
+        handler(event, tags, player)
+      end
+    end
   end
 
   -- fire all handlers that accept all events

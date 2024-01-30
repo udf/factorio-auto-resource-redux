@@ -1,13 +1,12 @@
 local GUILimitDialog = {}
 local Storage = require "src.Storage"
 local GUIDispatcher = require "src.GUIDispatcher"
+local GUIComponentSliderInput = require "src.GUIComponentSliderInput"
 local GUICommon = require "src.GUICommon"
 
 local GUI_CLOSE_EVENT = "arr-limit-close"
 local CLOSE_BUTTON_EVENT = "arr-limit-close-btn"
 local CONFIRM_BUTTON_EVENT = "arr-limit-confirm"
-local SLIDER_EVENT = "arr-limit-slider"
-local INPUT_EVENT = "arr-limit-input"
 
 
 local function highlight_reslist_button(player, storage_key, state)
@@ -106,25 +105,17 @@ function GUILimitDialog.open(player, storage_key, cursor_location)
   )
 
   local max_limit = fluid_name and Storage.MAX_FLUID_LIMIT or Storage.MAX_ITEM_LIMIT
-  content_flow.add({
-    type = "slider",
-    name = "slider",
-    style = "notched_slider",
-    value_step = math.floor(max_limit / 20),
-    maximum_value = max_limit,
-    value = item_limit,
-    tags = { event = SLIDER_EVENT }
-  })
-  content_flow.add({
-    type = "textfield",
-    name = "input",
-    style = "slider_value_textfield",
-    text = tostring(item_limit),
-    numeric = true,
-    allow_decimal = false,
-    allow_negative = false,
-    tags = { event = INPUT_EVENT, max = max_limit }
-  })
+  GUIComponentSliderInput.create(
+    content_flow,
+    {
+      value_step = math.floor(max_limit / 20),
+      maximum_value = max_limit,
+    },
+    {
+      allow_negative = false,
+    },
+    item_limit
+  )
 
   content_flow.add({
     type = "sprite-button",
@@ -150,18 +141,6 @@ local function on_close(event, tags, player)
   dialog.destroy()
 end
 
-local function on_slider_changed(event, tags, player)
-  local dialog = player.gui.screen[GUICommon.GUI_LIMIT_DIALOG]
-  dialog.inner_frame.content.input.text = tostring(event.element.slider_value)
-end
-
-local function on_text_changed(event, tags, player)
-  local dialog = player.gui.screen[GUICommon.GUI_LIMIT_DIALOG]
-  local new_limit = math.min(tags.max, tonumber(event.element.text) or 0)
-  event.element.text = tostring(new_limit)
-  dialog.inner_frame.content.slider.slider_value = new_limit
-end
-
 local function on_confirm(event, tags, player)
   local dialog = player.gui.screen[GUICommon.GUI_LIMIT_DIALOG]
   if not dialog or player.opened ~= dialog then
@@ -177,8 +156,6 @@ end
 GUIDispatcher.register(defines.events.on_gui_click, CLOSE_BUTTON_EVENT, on_close)
 GUIDispatcher.register(defines.events.on_gui_click, CONFIRM_BUTTON_EVENT, on_confirm)
 GUIDispatcher.register(GUIDispatcher.ON_CONFIRM, nil, on_confirm)
-GUIDispatcher.register(defines.events.on_gui_value_changed, SLIDER_EVENT, on_slider_changed)
-GUIDispatcher.register(defines.events.on_gui_text_changed, INPUT_EVENT, on_text_changed)
 GUIDispatcher.register(defines.events.on_gui_closed, GUI_CLOSE_EVENT, on_close)
 GUIDispatcher.register(defines.events.on_gui_closed, nil, on_close)
 
