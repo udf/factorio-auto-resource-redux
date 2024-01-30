@@ -1,4 +1,3 @@
--- TODO: split this into Handlers and HandlerUtils
 local EntityManager = {}
 
 local EntityGroups = require "src.EntityGroups"
