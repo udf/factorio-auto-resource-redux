@@ -50,13 +50,12 @@ local function insert_fluids(storage, entity, prod_type_pattern, target_amounts,
 end
 
 local function insert_using_priority_set(storage, entity, priority_set_key, stack, filter_name)
-  local priority_list = ItemPriorityManager.get_priority_list(entity)
-  local priority_set = priority_list[priority_set_key]
-  if not priority_set then
+  local priority_sets = ItemPriorityManager.get_priority_sets(entity)
+  if not priority_sets[priority_set_key] then
     log(("FIXME: missing priority set \"%s\" for %s!"):format(priority_set_key, entity.name))
     return
   end
-  local usable_items = ItemPriorityManager.get_usable_items(priority_set)
+  local usable_items = ItemPriorityManager.get_usable_items(priority_sets, priority_set_key)
   if filter_name then
     usable_items = { [filter_name] = usable_items[filter_name] }
   end

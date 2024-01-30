@@ -51,17 +51,12 @@ function Storage.initialise()
   -- Delete non-existent items
   for domain_name, _ in pairs(global.domains) do
     local storage = DomainStore.get_subdomain(domain_name, "storage", default_storage)
-    local removed = false
     for item_name, _ in pairs(storage.items) do
       local fluid_name = Storage.unpack_fluid_item_name(item_name)
       if (fluid_name and game.fluid_prototypes[fluid_name] == nil) or (not fluid_name and game.item_prototypes[item_name] == nil) then
-        log(("Removing unknown key %s:%s"):format(domain_name, item_name))
+        log(("Removing unknown item key %s:%s"):format(domain_name, item_name))
         storage.items[item_name] = nil
-        removed = true
       end
-    end
-    if removed then
-      ItemPriorityManager.recalculate_priority_items(storage, Storage)
     end
   end
 end
@@ -136,9 +131,6 @@ local function add_item_or_fluid(storage, item_or_fluid_name, amount, ignore_lim
     storage.items[item_or_fluid_name] = fluid
   else
     storage.items[item_or_fluid_name] = new_amount
-  end
-  if amount_stored == nil then
-    ItemPriorityManager.recalculate_priority_items(storage, Storage)
   end
   return new_amount - (amount_stored or 0)
 end

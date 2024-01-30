@@ -1,6 +1,6 @@
--- TODO: make this a submodule of storage "StoragePriorityManager"
 local ItemPriorityManager = {}
 
+local flib_table = require("__flib__/table")
 local Util = require "src.Util"
 local DomainStore = require "src.DomainStore";
 local EntityGroups = require "src.EntityGroups"
@@ -9,18 +9,32 @@ local DEFAULT_VEHICLE_AMMO_AMOUNT = 10
 local FUEL_BURN_SECONDS_TARGET = 90
 
 -- TODO: loading stuff into local variable might cause desync
-local possible_items = {}
+local default_priority_sets = {}
 
-local function default_priorities(domain_key)
-  return { domain_key = domain_key }
+local function get_new_priority_sets(domain_key)
+  local priorities = flib_table.deep_copy(default_priority_sets)
+  priorities.domain_key = domain_key
+  log(("Creating new priority sets list for domain %s"):format(domain_key))
+  return priorities
+end
+
+local function create_subset(group, category, entity_name, sub_item_name)
+  return {
+    item_counts = {},
+    item_order = {},
+    entity_name = entity_name,
+    sub_item_name = sub_item_name,
+    category = category,
+    group = group
+  }
 end
 
 function ItemPriorityManager.get_fuel_key(entity_name)
-  return "fuel;" .. entity_name
+  return "fuel." .. entity_name
 end
 
 function ItemPriorityManager.get_ammo_key(entity_name, inv_slot_index)
-  return "ammo;" .. entity_name .. ";" .. inv_slot_index
+  return "ammo." .. entity_name .. "." .. inv_slot_index
 end
 
 local function clamp_to_stack_size(item_name, count)
@@ -28,7 +42,7 @@ local function clamp_to_stack_size(item_name, count)
   return Util.clamp(count, 1, stack_size)
 end
 
-local function find_all_possible_items()
+local function create_default_priority_sets()
   local fuels = {}
   local ammunitions = {}
   for category, _ in pairs(game.ammo_category_prototypes) do
@@ -48,16 +62,17 @@ local function find_all_possible_items()
     end
   end
 
-  for name, entity in pairs(game.entity_prototypes) do
+  for entity_name, entity in pairs(game.entity_prototypes) do
     if EntityGroups.names_to_groups[entity.name] ~= nil then
       local attack_parameters = entity.attack_parameters or {}
       -- ammo for turrets
       if attack_parameters.ammo_categories ~= nil then
-        local key = ItemPriorityManager.get_ammo_key(name, 1)
-        possible_items[key] = {}
+        local key = ItemPriorityManager.get_ammo_key(entity_name, 1)
+        local category = "ammo." .. table.concat(attack_parameters.ammo_categories, "+")
+        default_priority_sets[key] = create_subset("ammo", category, entity_name)
         for _, category in ipairs(attack_parameters.ammo_categories) do
           for _, ammo_item in ipairs(ammunitions[category]) do
-            possible_items[key][ammo_item] = entity.automated_ammo_count
+            default_priority_sets[key].item_counts[ammo_item] = entity.automated_ammo_count
           end
         end
       end
@@ -65,13 +80,14 @@ local function find_all_possible_items()
       -- fuel
       local burner_prototype = entity.burner_prototype
       if burner_prototype ~= nil then
-        local key = ItemPriorityManager.get_fuel_key(name)
-        possible_items[key] = {}
+        local key = ItemPriorityManager.get_fuel_key(entity_name)
+        local category = "fuel." .. table.concat(Util.table_keys(burner_prototype.fuel_categories), "+")
+        default_priority_sets[key] = create_subset(entity.is_building and "fuel" or "vehicle_fuel", category, entity_name)
         for category, _ in pairs(burner_prototype.fuel_categories) do
           for fuel_item, fuel_value in pairs(fuels[category]) do
             local watts = entity.max_energy_usage * 60
             local num_items = math.ceil(FUEL_BURN_SECONDS_TARGET / (fuel_value / watts))
-            possible_items[key][fuel_item] = clamp_to_stack_size(fuel_item, num_items)
+            default_priority_sets[key].item_counts[fuel_item] = clamp_to_stack_size(fuel_item, num_items)
           end
         end
       end
@@ -80,34 +96,45 @@ local function find_all_possible_items()
       -- TODO: set ammo count from fire rate?
       if entity.guns ~= nil then
         for i, gun_prototype in ipairs(entity.indexed_guns) do
-          local key = ItemPriorityManager.get_ammo_key(name, i)
-          possible_items[key] = {}
+          local key = ItemPriorityManager.get_ammo_key(entity_name, i)
+          local category = "ammo." .. table.concat(gun_prototype.attack_parameters.ammo_categories, "+")
+          default_priority_sets[key] = create_subset("ammo", category, entity_name, gun_prototype.name)
           for _, category in ipairs(gun_prototype.attack_parameters.ammo_categories) do
             for _, ammo_item in ipairs(ammunitions[category]) do
-              possible_items[key][ammo_item] = clamp_to_stack_size(ammo_item, DEFAULT_VEHICLE_AMMO_AMOUNT)
+              default_priority_sets[key].item_counts[ammo_item] = clamp_to_stack_size(ammo_item,
+                DEFAULT_VEHICLE_AMMO_AMOUNT)
             end
           end
         end
       end
     end
   end
+
+  -- Compute default list order
+  for set_key, set in pairs(default_priority_sets) do
+    for item_name, _ in pairs(set.item_counts) do
+      table.insert(default_priority_sets[set_key].item_order, item_name)
+    end
+  end
+  default_priority_sets.domain_key = ""
+
   log("Computed prioritisable items:")
-  log(serpent.block(possible_items))
+  log(serpent.block(default_priority_sets))
 end
 
-local function add_new_items_to_list(old_list, expected_items)
+local function add_new_items_to_list(old_list, expected_items_dict)
   -- add items that should exist in the same order as they appear in dest
   local seen = {}
   local new_list = {}
   for _, val in ipairs(old_list) do
-    if expected_items[val] ~= nil then
+    if expected_items_dict[val] ~= nil then
       table.insert(new_list, val)
       seen[val] = true
     end
   end
 
   -- add new items that aren't already there
-  for val, _ in pairs(expected_items) do
+  for val, _ in pairs(expected_items_dict) do
     if seen[val] == nil then
       table.insert(new_list, val)
     end
@@ -116,44 +143,71 @@ local function add_new_items_to_list(old_list, expected_items)
   return new_list
 end
 
--- TODO: perhaps don't pass entire Storage module to this function
-function ItemPriorityManager.recalculate_priority_items(storage, Storage)
-  log("Recalculating prioritisable items for domain " .. storage.domain_key)
-  local priorities = DomainStore.get_subdomain(storage.domain_key, "priorities", default_priorities)
-
+local function add_new_items_to_dict(old_dict, expected_items, removed_log_fmt, added_log_fmt)
   -- remove unknown keys
-  for key, _ in pairs(priorities) do
-    if possible_items[key] == nil then
-      priorities[key] = nil
+  for k, v in pairs(old_dict) do
+    if expected_items[k] == nil then
+      old_dict[k] = nil
+      log(removed_log_fmt:format(k))
     end
   end
-  for key, src_table in pairs(possible_items) do
-    if priorities[key] == nil then
-      priorities[key] = { seen = false }
+  -- add new keys
+  for k, v in pairs(expected_items) do
+    if old_dict[k] == nil then
+      old_dict[k] = flib_table.deep_copy(v)
+      log(added_log_fmt:format(k))
     end
-    local item_amounts = Storage.filter_items(storage, src_table)
-    priorities[key].items = add_new_items_to_list(priorities[key].items or {}, item_amounts)
-    priorities[key].amounts = Util.dictionary_merge(priorities[key].amounts or {}, item_amounts)
   end
-
-  log(serpent.block(priorities))
+  return old_dict
 end
 
-function ItemPriorityManager.get_priority_list(entity)
-  return DomainStore.get_subdomain(DomainStore.get_domain_key(entity), "priorities", default_priorities)
+function ItemPriorityManager.get_priority_sets(entity)
+  return DomainStore.get_subdomain(DomainStore.get_domain_key(entity), "priorities", get_new_priority_sets)
 end
 
-function ItemPriorityManager.get_usable_items(priority_set)
+function ItemPriorityManager.get_usable_items(priority_sets, set_key)
   local usable_items = {}
-  priority_set.seen = true
-  for _, item_name in ipairs(priority_set.items) do
-    usable_items[item_name] = priority_set.amounts[item_name]
+  for _, item_name in ipairs(priority_sets[set_key].item_order) do
+    usable_items[item_name] = priority_sets[set_key].item_counts[item_name]
   end
   return usable_items
 end
 
 function ItemPriorityManager.initialise()
-  find_all_possible_items()
+  create_default_priority_sets()
+
+  for domain_name, _ in pairs(global.domains) do
+    local priority_sets = DomainStore.get_subdomain(domain_name, "priorities", get_new_priority_sets)
+    add_new_items_to_dict(
+      priority_sets,
+      default_priority_sets,
+      ("Removing unknown priority set %s:%%s"):format(domain_name),
+      ("Adding priority set %s:%%s"):format(domain_name)
+    )
+    for set_key, priority_set in pairs(priority_sets) do
+      if type(priority_set) ~= "table" then
+        goto continue
+      end
+      local default_priority_set = default_priority_sets[set_key]
+      -- add new top-level keys
+      add_new_items_to_dict(
+        priority_set,
+        default_priority_set,
+        ("Removing unknown key from priority set %s:%s:%%s"):format(domain_name, set_key),
+        ("Adding new key to priority set %s:%s:%%s"):format(domain_name, set_key)
+      )
+      -- update items in this set
+      add_new_items_to_dict(
+        priority_set.item_counts,
+        default_priority_set.item_counts,
+        ("Removing unknown item %%s from priority set %s:%s"):format(domain_name, set_key),
+        ("Adding new item %%s to priority set %s:%s"):format(domain_name, set_key)
+      )
+      -- recompute item ordering
+      priority_set.item_order = add_new_items_to_list(priority_set.item_order, default_priority_set.item_counts)
+      ::continue::
+    end
+  end
 end
 
 return ItemPriorityManager
