@@ -46,37 +46,7 @@ function GUILimitDialog.open(player, storage_key, cursor_location)
     player.opened = dialog
   end
 
-  local header_flow = dialog.add({
-    type = "flow",
-    direction = "horizontal",
-  })
-  header_flow.drag_target = dialog
-
-  header_flow.add {
-    type = "label",
-    caption = "Set storage limit",
-    style = "frame_title",
-    ignored_by_interaction = true,
-  }
-
-  local header_drag = header_flow.add {
-    type = "empty-widget",
-    style = "draggable_space_header",
-    ignored_by_interaction = true,
-  }
-  header_drag.style.height = 24
-  header_drag.style.horizontally_stretchable = true
-  header_drag.style.vertically_stretchable = true
-
-  header_flow.add {
-    type = "sprite-button",
-    sprite = "utility/close_white",
-    hovered_sprite = "utility/close_black",
-    clicked_sprite = "utility/close_black",
-    style = "cancel_close_button",
-    tags = { event = CLOSE_BUTTON_EVENT },
-  }
-
+  GUICommon.create_header(dialog, "Set storage limit", CLOSE_BUTTON_EVENT)
 
   local inner_frame = dialog.add({
     type = "frame",

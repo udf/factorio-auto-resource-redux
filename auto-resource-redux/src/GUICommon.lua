@@ -37,4 +37,39 @@ function GUICommon.create_item_button(parent, storage_key, new_attrs)
   return parent.add(Util.table_merge(default_attrs, new_attrs))
 end
 
+function GUICommon.create_header(parent, title, close_event)
+  local header_flow = parent.add({
+    type = "flow",
+    direction = "horizontal",
+  })
+  header_flow.drag_target = parent
+
+  header_flow.add {
+    type = "label",
+    caption = title,
+    style = "frame_title",
+    ignored_by_interaction = true,
+  }
+
+  local header_drag = header_flow.add {
+    type = "empty-widget",
+    style = "draggable_space_header",
+    ignored_by_interaction = true,
+  }
+  header_drag.style.height = 24
+  header_drag.style.horizontally_stretchable = true
+  header_drag.style.vertically_stretchable = true
+
+  header_flow.add {
+    type = "sprite-button",
+    sprite = "utility/close_white",
+    hovered_sprite = "utility/close_black",
+    clicked_sprite = "utility/close_black",
+    style = "cancel_close_button",
+    tags = { event = close_event },
+  }
+
+  return header_flow
+end
+
 return GUICommon
