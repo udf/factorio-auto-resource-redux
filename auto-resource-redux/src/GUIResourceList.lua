@@ -111,12 +111,6 @@ local function update_gui(player)
   end
 end
 
-function GUIResourceList.initialise()
-  if global.gui_resources_last_update == nil then
-    global.gui_resources_last_update = {}
-  end
-end
-
 function GUIResourceList.on_tick()
   local _, player = Util.get_next_updatable("resource_gui", TICKS_PER_UPDATE, game.connected_players)
   if player then
