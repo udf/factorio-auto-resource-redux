@@ -5,16 +5,11 @@ local ItemPriorityManager = require "src.ItemPriorityManager"
 local GUICommon = require "src.GUICommon"
 local GUIDispatcher = require "src.GUIDispatcher"
 local GUILimitDialog = require "src.GUILimitDialog"
+local R = require "src.RichTextConstants"
 
 
 local TICKS_PER_UPDATE = 12
 local RES_BUTTON_EVENT = "arr-res-btn"
-local COLOUR_END = "[/color]"
-local COLOUR_LABEL = "[color=#e6d0ae]"
-local COLOUR_RED = "[color=red]"
-local COLOUR_GREEN = "[color=green]"
-local FONT_END = "[/font]"
-local FONT_BOLD = "[font=default-bold]"
 
 -- TODO: ctrl-right click to go to last pickup location?
 local function update_gui(player)
@@ -58,20 +53,20 @@ local function update_gui(player)
     local item_limit = Storage.get_item_limit(storage, storage_key) or 0
     local is_red = quantity / item_limit < 0.01
     local tooltip = {
-      "", FONT_BOLD, COLOUR_LABEL,
+      "", R.FONT_BOLD, R.COLOUR_LABEL,
       { fluid_name and "fluid-name." .. fluid_name or "item-name." .. storage_key },
-      COLOUR_END,
+      R.COLOUR_END,
       "\n",
-      (is_red and COLOUR_RED or ""), (min or count), (is_red and COLOUR_END or ""),
+      (is_red and R.COLOUR_RED or ""), (min or count), (is_red and R.COLOUR_END or ""),
       "/", item_limit,
-      FONT_END
+      R.FONT_END
     }
     -- List the levels of each fluid temperature
     if fluid_name then
       if num_vals > 1 then
         Util.array_extend(
           tooltip,
-          { "\n", COLOUR_LABEL, FONT_BOLD, { "gui.total" }, FONT_END, COLOUR_END, ": ", sum }
+          { "\n", R.COLOUR_LABEL, R.FONT_BOLD, { "gui.total" }, R.FONT_END, R.COLOUR_END, ": ", sum }
         )
       end
       local i = 0
@@ -80,9 +75,9 @@ local function update_gui(player)
       for temperature, qty in pairs(count) do
         local colour_tag = nil
         if is_red and qty == min then
-          colour_tag = COLOUR_RED
+          colour_tag = R.COLOUR_RED
         elseif qty == max then
-          colour_tag = COLOUR_GREEN
+          colour_tag = R.COLOUR_GREEN
         end
         table.insert(
           qty_strs,
