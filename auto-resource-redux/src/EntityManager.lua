@@ -38,7 +38,7 @@ local function reload_entities()
 
   local entity_names = Util.table_keys(EntityGroups.names_to_groups)
   for _, surface in pairs(game.surfaces) do
-    local entities = surface.find_entities_filtered({ force = global.forces, name = entity_names })
+    local entities = surface.find_entities_filtered({ force = Util.table_keys(global.forces), name = entity_names })
     for _, entity in ipairs(entities) do
       manage_entity(entity)
     end

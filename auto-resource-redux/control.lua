@@ -17,7 +17,7 @@ local function initialise()
   -- automatically enable processing the player force
   -- TODO: other forces will need to opt in
   if global.forces == nil then
-    global.forces = { "player" }
+    global.forces = { player = true }
   end
 
   DomainStore.initialise()
