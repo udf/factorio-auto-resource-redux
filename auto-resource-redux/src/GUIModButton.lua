@@ -76,6 +76,7 @@ local function on_enable(player)
       player.force.name
     )
   )
+  player.force.print("Welcome back, commander!")
   global.forces[player.force.name] = true
   EntityManager.reload_entities()
   update_gui(player)
