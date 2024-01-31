@@ -29,7 +29,7 @@ local function manage_entity(entity)
   return queue_key
 end
 
-local function reload_entities()
+function EntityManager.reload_entities()
   log("Reloading entities")
   global.entity_queues = {}
   for queue_key, _ in pairs(entity_queue_specs) do
@@ -99,6 +99,9 @@ function EntityManager.on_entity_created(event)
   local entity = event.created_entity or event.destination
   if entity == nil then
     entity = event.entity
+  end
+  if global.forces[entity.force.name] == nil then
+    return
   end
   local queue_key = manage_entity(entity)
   if queue_key == nil then

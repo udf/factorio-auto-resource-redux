@@ -8,6 +8,7 @@ local EntityManager = require "src.EntityManager"
 local LogisticManager = require("src.LogisticManager")
 local ItemPriorityManager = require "src.ItemPriorityManager"
 local GUIResourceList = require "src.GUIResourceList"
+local GUIModButton = require "src.GUIModButton"
 local GUIDispatcher = require "src.GUIDispatcher"
 
 
@@ -15,7 +16,6 @@ local initialised = false
 
 local function initialise()
   -- automatically enable processing the player force
-  -- TODO: other forces will need to opt in
   if global.forces == nil then
     global.forces = { player = true }
   end
@@ -36,6 +36,7 @@ local function on_tick()
 
   EntityManager.on_tick()
   LogisticManager.on_tick()
+  GUIModButton.on_tick()
   GUIResourceList.on_tick()
 end
 

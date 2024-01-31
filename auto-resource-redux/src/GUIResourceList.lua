@@ -66,7 +66,7 @@ local function update_gui(player)
       if num_vals > 1 then
         Util.array_extend(
           tooltip,
-          { "\n", R.COLOUR_LABEL, R.FONT_BOLD, { "gui.total" }, R.FONT_END, R.COLOUR_END, ": ", sum }
+          { "\n", R.LABEL, { "gui.total" }, R.LABEL_END, ": ", sum }
         )
       end
       local i = 0

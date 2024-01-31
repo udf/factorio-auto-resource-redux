@@ -1,3 +1,28 @@
+local logo = {
+  type = "sprite",
+  name = "arr-logo",
+  filename = "__auto-resource-redux__/graphics/logo.png",
+  priority = "medium",
+  width = 64,
+  height = 64,
+  generate_sdf = true
+}
+
+local logo_disabled = {
+  type = "sprite",
+  name = "arr-logo-disabled",
+  filename = "__auto-resource-redux__/graphics/logo-disabled.png",
+  priority = "medium",
+  width = 64,
+  height = 64,
+  generate_sdf = true
+}
+
+data:extend({
+  logo,
+  logo_disabled
+})
+
 -- Hidden chest for miner outputs
 -- TODO: this could be a linked chest for better performance
 local hidden_chest = table.deepcopy(data.raw["container"]["iron-chest"])

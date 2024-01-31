@@ -3,8 +3,9 @@ local Util = require "src.Util"
 local Storage = require "src.Storage"
 
 -- "arr" stands for auto resource redux, matey
+GUICommon.GUI_LOGO_BUTTON = "arr-logo-button"
 GUICommon.GUI_RESOURCE_TABLE = "arr-table"
-GUICommon.GUI_LIMIT_DIALOG   = "arr-limit-diag"
+GUICommon.GUI_LIMIT_DIALOG = "arr-limit-diag"
 
 
 local mouse_button_str = {
