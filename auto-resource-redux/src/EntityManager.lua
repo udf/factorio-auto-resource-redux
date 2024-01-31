@@ -68,7 +68,7 @@ function EntityManager.initialise()
     end
   end
   if should_reload_entities then
-    reload_entities()
+    EntityManager.reload_entities()
   end
 end
 
