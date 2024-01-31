@@ -5,7 +5,7 @@ local ItemPriorityManager = require "src.ItemPriorityManager"
 local GUICommon = require "src.GUICommon"
 local GUIDispatcher = require "src.GUIDispatcher"
 local GUILimitDialog = require "src.GUILimitDialog"
-local R = require "src.RichTextConstants"
+local R = require "src.RichText"
 
 
 local TICKS_PER_UPDATE = 12

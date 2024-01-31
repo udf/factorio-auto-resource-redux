@@ -2,7 +2,7 @@ local GUIModButton = {}
 local mod_gui = require "mod-gui"
 local Util = require "src.Util"
 local GUIDispatcher = require "src.GUIDispatcher"
-local R = require "src.RichTextConstants"
+local R = require "src.RichText"
 local EntityManager = require "src.EntityManager"
 local GUICommon = require "src.GUICommon"
 
