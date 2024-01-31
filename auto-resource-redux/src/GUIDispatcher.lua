@@ -32,6 +32,7 @@ function GUIDispatcher.on_event(event)
   local tags = (event.element or {}).tags or {}
   local event_name = event.input_name or event.name
   local event_tags = tags['event']
+  local fired_handlers = {}
   if type(event_tags) == "string" then
     event_tags = { [event_tags] = true }
   end
@@ -40,13 +41,14 @@ function GUIDispatcher.on_event(event)
       local handler = registered_tagged_events[event_name][event_tag]
       if handler then
         handler(event, tags, player)
+        fired_handlers[handler] = true
       end
     end
   end
 
   -- fire all handlers that accept all events
   for event_tag, fn in pairs(registered_events[event_name]) do
-    if fn ~= handler then
+    if fired_handlers[fn] == nil then
       fn(event, nil, player)
     end
   end
