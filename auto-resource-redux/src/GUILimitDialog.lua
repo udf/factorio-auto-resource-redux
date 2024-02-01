@@ -66,10 +66,7 @@ function GUILimitDialog.open(player, storage_key, cursor_location)
     content_flow,
     storage_key,
     {
-      elem_tooltip = {
-        type = fluid_name and "fluid" or "item",
-        name = fluid_name or storage_key
-      },
+      elem_tooltip = true,
       style = "inventory_slot"
     }
   )

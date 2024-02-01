@@ -6,6 +6,7 @@ local Storage = require "src.Storage"
 GUICommon.GUI_LOGO_BUTTON = "arr-logo-button"
 GUICommon.GUI_RESOURCE_TABLE = "arr-table"
 GUICommon.GUI_LIMIT_DIALOG = "arr-limit-diag"
+GUICommon.GUI_ITEM_PRIORITY = "arr-priority-list"
 
 
 local mouse_button_str = {
@@ -34,6 +35,12 @@ function GUICommon.create_item_button(parent, storage_key, new_attrs)
     type = "sprite-button",
     sprite = fluid_name and "fluid/" .. fluid_name or "item/" .. storage_key,
   }
+  if new_attrs.elem_tooltip == true then
+    new_attrs.elem_tooltip = {
+      type = fluid_name and "fluid" or "item",
+      name = fluid_name or storage_key
+    }
+  end
   return parent.add(Util.table_merge(default_attrs, new_attrs))
 end
 
