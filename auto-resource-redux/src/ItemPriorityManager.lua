@@ -165,7 +165,7 @@ function ItemPriorityManager.get_priority_sets(entity)
   return DomainStore.get_subdomain(DomainStore.get_domain_key(entity), "priorities", get_new_priority_sets)
 end
 
-function ItemPriorityManager.get_usable_items(priority_sets, set_key)
+function ItemPriorityManager.get_ordered_items(priority_sets, set_key)
   local usable_items = {}
   for _, item_name in ipairs(priority_sets[set_key].item_order) do
     usable_items[item_name] = priority_sets[set_key].item_counts[item_name]

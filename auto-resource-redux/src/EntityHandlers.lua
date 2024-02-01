@@ -55,7 +55,7 @@ local function insert_using_priority_set(storage, entity, priority_set_key, stac
     log(("FIXME: missing priority set \"%s\" for %s!"):format(priority_set_key, entity.name))
     return
   end
-  local usable_items = ItemPriorityManager.get_usable_items(priority_sets, priority_set_key)
+  local usable_items = ItemPriorityManager.get_ordered_items(priority_sets, priority_set_key)
   if filter_name then
     usable_items = { [filter_name] = usable_items[filter_name] }
   end
