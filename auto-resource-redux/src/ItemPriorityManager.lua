@@ -162,7 +162,11 @@ local function add_new_items_to_dict(old_dict, expected_items, removed_log_fmt, 
 end
 
 function ItemPriorityManager.get_priority_sets(entity)
-  return DomainStore.get_subdomain(DomainStore.get_domain_key(entity), "priorities", get_new_priority_sets)
+  return ItemPriorityManager.get_priority_sets_for_domain(DomainStore.get_domain_key(entity))
+end
+
+function ItemPriorityManager.get_priority_sets_for_domain(domain_key)
+  return DomainStore.get_subdomain(domain_key, "priorities", get_new_priority_sets)
 end
 
 function ItemPriorityManager.get_ordered_items(priority_sets, set_key)
@@ -177,7 +181,8 @@ function ItemPriorityManager.initialise()
   create_default_priority_sets()
 
   for domain_name, _ in pairs(global.domains) do
-    local priority_sets = DomainStore.get_subdomain(domain_name, "priorities", get_new_priority_sets)
+    local priority_sets = ItemPriorityManager.get_priority_sets_for_domain(domain_name)
+    priority_sets.domain_key = domain_name
     add_new_items_to_dict(
       priority_sets,
       default_priority_sets,

@@ -5,6 +5,7 @@ local GUIDispatcher = require "src.GUIDispatcher"
 local R = require "src.RichText"
 local EntityManager = require "src.EntityManager"
 local GUICommon = require "src.GUICommon"
+local GUIItemPriority = require "src.GUIItemPriority"
 
 local TICKS_PER_UPDATE = 30
 local BUTTON_NAME = "arr-mod-btn"
@@ -31,11 +32,9 @@ local function update_gui(player)
       R.LABEL_END,
       "\n",
       R.HINT,
-      { "control-keys.shift" },
-      "+",
       { "control-keys.mouse-button-1" },
       R.HINT_END,
-      " to disable.",
+      " to set item priorities.",
     }
     button.sprite = "arr-logo"
   else
@@ -62,10 +61,10 @@ function GUIModButton.on_tick()
   end
 end
 
-local function on_enable(player)
+local function enable_mod_for_force(player)
   local enabled = global.forces[player.force.name] ~= nil
   if enabled then
-    return
+    return false
   end
 
   game.print(
@@ -80,12 +79,15 @@ local function on_enable(player)
   global.forces[player.force.name] = true
   EntityManager.reload_entities()
   update_gui(player)
+  return true
 end
 
 local function on_button_click(event, tags, player)
   local click_str = GUICommon.get_click_str(event)
   if click_str == "left" then
-    on_enable(player)
+    if not enable_mod_for_force(player) then
+      GUIItemPriority.open(player)
+    end
   end
 end
 
