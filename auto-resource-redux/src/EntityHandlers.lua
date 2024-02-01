@@ -72,22 +72,25 @@ local function insert_using_priority_set(storage, entity, priority_set_key, stac
   -- insert first usable item
   for item_name, wanted_amount in pairs(usable_items) do
     local stored_amount = storage.items[item_name] or 0
-    if wanted_amount > 0 and stored_amount > 0 then
+    if wanted_amount <= 0 then
+      goto continue
+    end
+    if stored_amount > 0 then
       if item_name == current_item then
         stored_amount = stored_amount + current_count
       end
       local new_satisfaction = math.min(1, stored_amount / wanted_amount)
-      if new_satisfaction < current_satisfaction then
-        goto continue
+
+      if new_satisfaction >= current_satisfaction then
+        Storage.add_to_or_replace_stack(storage, stack, item_name, wanted_amount, true)
+        break
       end
-      Storage.add_to_or_replace_stack(storage, stack, item_name, wanted_amount, true)
-      break
     end
-    ::continue::
     if item_name == current_item then
       -- avoid downgrading
       break
     end
+    ::continue::
   end
 end
 
