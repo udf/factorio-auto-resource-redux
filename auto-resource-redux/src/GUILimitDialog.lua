@@ -80,11 +80,11 @@ function GUILimitDialog.open(player, storage_key, cursor_location)
     {
       value_step = math.floor(max_limit / 20),
       maximum_value = max_limit,
+      value = item_limit
     },
     {
       allow_negative = false,
-    },
-    item_limit
+    }
   )
 
   content_flow.add({

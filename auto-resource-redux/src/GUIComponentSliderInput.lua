@@ -6,14 +6,12 @@ local GUIDispatcher = require "src.GUIDispatcher"
 local SLIDER_EVENT = "arr-component-slider"
 local INPUT_EVENT = "arr-component-slider-input"
 
-function GUIComponentSliderInput.create(parent, slider_attrs, input_attrs, initial_value)
-  initial_value = initial_value or 0
-  parent.add(flib_table.deep_merge({
+function GUIComponentSliderInput.create(parent, slider_attrs, input_attrs)
+  local slider = parent.add(flib_table.deep_merge({
     {
       type = "slider",
       name = "slider",
       style = "notched_slider",
-      value = initial_value,
       tags = { event = { [SLIDER_EVENT] = true } }
     },
     slider_attrs
@@ -23,7 +21,7 @@ function GUIComponentSliderInput.create(parent, slider_attrs, input_attrs, initi
       type = "textfield",
       name = "input",
       style = "slider_value_textfield",
-      text = tostring(initial_value),
+      text = slider.slider_value,
       numeric = true,
       allow_decimal = false,
       tags = { event = { [INPUT_EVENT] = true } }
