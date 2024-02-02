@@ -106,8 +106,8 @@ local function insert_fuel(storage, entity)
   end
 end
 
-function EntityHandlers.handle_assembler(entity)
-  local recipe = entity.get_recipe()
+function EntityHandlers.handle_assembler(entity, secondary_recipe)
+  local recipe = entity.get_recipe() or secondary_recipe
   if recipe == nil then
     return
   end
@@ -217,10 +217,11 @@ function EntityHandlers.handle_assembler(entity)
 end
 
 function EntityHandlers.handle_furnace(entity)
-  if entity.get_recipe() then
+  local recipe = entity.get_recipe() or entity.previous_recipe
+  if recipe then
     local storage = Storage.get_storage(entity)
     insert_fuel(storage, entity)
-    EntityHandlers.handle_assembler(entity)
+    EntityHandlers.handle_assembler(entity, recipe)
   end
 end
 
