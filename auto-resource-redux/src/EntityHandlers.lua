@@ -9,7 +9,7 @@ local Util = require "src.Util"
 
 local function store_fluids(storage, entity, prod_type_pattern, ignore_limit)
   local remaining_fluids = {}
-  prod_type_pattern = prod_type_pattern or "output"
+  prod_type_pattern = prod_type_pattern or "^"
   for i, fluid in Util.iter_fluidboxes(entity, prod_type_pattern, false) do
     local new_fluid, amount_added = Storage.add_fluid(storage, fluid, ignore_limit)
     local fluid_key = Storage.get_fluid_storage_key(fluid.name)
@@ -24,13 +24,13 @@ local function store_fluids(storage, entity, prod_type_pattern, ignore_limit)
 end
 
 function EntityHandlers.store_all_fluids(entity)
-  store_fluids(Storage.get_storage(entity), entity, ".", true)
+  store_fluids(Storage.get_storage(entity), entity, "^", true)
 end
 
-local function insert_fluids(storage, entity, prod_type_pattern, target_amounts, default_amount)
-  prod_type_pattern = prod_type_pattern or "input"
-  for i, fluid, filter in Util.iter_fluidboxes(entity, prod_type_pattern, true) do
-    if not filter then
+local function insert_fluids(storage, entity, target_amounts, default_amount)
+  default_amount = default_amount or 0
+  for i, fluid, filter, proto in Util.iter_fluidboxes(entity, "^", true) do
+    if not filter or proto.production_type == "output" then
       goto continue
     end
     fluid = fluid or { name = filter.name, amount = 0 }
@@ -116,6 +116,8 @@ function EntityHandlers.handle_assembler(entity, secondary_recipe)
   local storage = Storage.get_storage(entity)
   local output_inventory = entity.get_inventory(defines.inventory.assembling_machine_output)
   local _, remaining_items = Storage.take_all_from_inventory(storage, output_inventory)
+  -- TODO: we're storing all fluids here, so a recipe that has the same input and output fluid
+  -- might get stuck as the output will be stored first
   Util.dictionary_merge(remaining_items, store_fluids(storage, entity))
 
   -- check if we should craft
@@ -162,9 +164,11 @@ function EntityHandlers.handle_assembler(entity, secondary_recipe)
   local ingredient_multiplier = math.max(1, math.ceil(TARGET_INGREDIENT_CRAFT_TIME * crafts_per_second))
   local input_inventory = entity.get_inventory(defines.inventory.assembling_machine_input)
   local input_items = input_inventory.get_contents()
-  for i, fluid in Util.iter_fluidboxes(entity, "input", false) do
-    local storage_key = Storage.get_fluid_storage_key(fluid.name)
-    input_items[storage_key] = math.floor(fluid.amount)
+  for i, fluid, filter, proto in Util.iter_fluidboxes(entity, "^", false) do
+    if proto.production_type ~= "output" then
+      local storage_key = Storage.get_fluid_storage_key(fluid.name)
+      input_items[storage_key] = math.floor(fluid.amount)
+    end
   end
   -- reduce the multiplier if we don't have enough of an ingredient
   for _, ingredient in ipairs(recipe.ingredients) do
@@ -198,7 +202,7 @@ function EntityHandlers.handle_assembler(entity, secondary_recipe)
       end
     end
   end
-  insert_fluids(storage, entity, "input", fluid_targets)
+  insert_fluids(storage, entity, fluid_targets)
 end
 
 function EntityHandlers.handle_furnace(entity)

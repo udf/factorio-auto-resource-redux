@@ -144,12 +144,12 @@ function Util.iter_fluidboxes(entity, prod_type_pattern, iter_all)
       i = i + 1
       local fluid = entity.fluidbox[i]
       local proto = entity.fluidbox.get_prototype(i)
-      if (iter_all or fluid ~= nil) and string.match(proto.production_type, prod_type_pattern) then
+      if (iter_all or fluid ~= nil) and string.match(proto.production_type or "", prod_type_pattern) then
         local filter = entity.fluidbox.get_filter(i)
         if not fluid and filter then
           fluid = { name = filter.name, temperature = filter.minimum_temperature, amount = 0 }
         end
-        return i, fluid, filter
+        return i, fluid, filter, proto
       end
     end
   end
