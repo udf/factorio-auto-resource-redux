@@ -15,7 +15,9 @@ local function handle_player_logistics(player)
 
   local trash_inv = player.get_inventory(defines.inventory.character_trash)
   local storage = Storage.get_storage(player)
-  Storage.take_all_from_inventory(storage, trash_inv, true)
+  if trash_inv then
+    Storage.take_all_from_inventory(storage, trash_inv, true)
+  end
 
   -- TODO: requests
 end
