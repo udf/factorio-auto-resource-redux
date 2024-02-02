@@ -54,7 +54,7 @@ local function update_gui(player)
     local is_red = quantity / item_limit < 0.01
     local tooltip = {
       "", R.FONT_BOLD, R.COLOUR_LABEL,
-      { fluid_name and "fluid-name." .. fluid_name or "item-name." .. storage_key },
+      fluid_name and { "fluid-name." .. fluid_name } or game.item_prototypes[storage_key].localised_name,
       R.COLOUR_END,
       "\n",
       (is_red and R.COLOUR_RED or ""), (min or count), (is_red and R.COLOUR_END or ""),
