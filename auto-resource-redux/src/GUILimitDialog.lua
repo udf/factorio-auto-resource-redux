@@ -7,6 +7,7 @@ local GUICommon = require "src.GUICommon"
 local GUI_CLOSE_EVENT = "arr-limit-close"
 local CLOSE_BUTTON_EVENT = "arr-limit-close-btn"
 local CONFIRM_BUTTON_EVENT = "arr-limit-confirm"
+local INPUT_CONFIRMED_EVENT = "arr-limit-input-confirm"
 
 
 local function highlight_reslist_button(player, storage_key, state)
@@ -81,6 +82,7 @@ function GUILimitDialog.open(player, storage_key, cursor_location)
     },
     {
       allow_negative = false,
+      tags = { event = { [INPUT_CONFIRMED_EVENT] = true } }
     }
   )
 
@@ -122,7 +124,8 @@ end
 
 GUIDispatcher.register(defines.events.on_gui_click, CLOSE_BUTTON_EVENT, on_close)
 GUIDispatcher.register(defines.events.on_gui_click, CONFIRM_BUTTON_EVENT, on_confirm)
-GUIDispatcher.register(GUIDispatcher.ON_CONFIRM, nil, on_confirm)
+GUIDispatcher.register(GUIDispatcher.ON_CONFIRM_KEYPRESS, nil, on_confirm)
+GUIDispatcher.register(defines.events.on_gui_confirmed, INPUT_CONFIRMED_EVENT, on_confirm)
 GUIDispatcher.register(defines.events.on_gui_closed, GUI_CLOSE_EVENT, on_close)
 GUIDispatcher.register(defines.events.on_gui_closed, nil, on_close)
 

@@ -1,6 +1,6 @@
 local GUIDispatcher = {}
 
-GUIDispatcher.ON_CONFIRM = "arr-gui-confirm"
+GUIDispatcher.ON_CONFIRM_KEYPRESS = "arr-gui-confirm"
 
 -- { on_click = { event_tag = fn, ... }, ... }
 local registered_tagged_events = {
@@ -8,7 +8,8 @@ local registered_tagged_events = {
   [defines.events.on_gui_closed] = {},
   [defines.events.on_gui_value_changed] = {},
   [defines.events.on_gui_text_changed] = {},
-  [GUIDispatcher.ON_CONFIRM] = {},
+  [GUIDispatcher.ON_CONFIRM_KEYPRESS] = {},
+  [defines.events.on_gui_confirmed] = {},
 }
 -- { on_click = { fn1, fn2, ... }, ... }
 local registered_events = {
@@ -16,7 +17,8 @@ local registered_events = {
   [defines.events.on_gui_closed] = {},
   [defines.events.on_gui_value_changed] = {},
   [defines.events.on_gui_text_changed] = {},
-  [GUIDispatcher.ON_CONFIRM] = {},
+  [GUIDispatcher.ON_CONFIRM_KEYPRESS] = {},
+  [defines.events.on_gui_confirmed] = {},
 }
 
 function GUIDispatcher.register(event_name, event_tag, handler)
