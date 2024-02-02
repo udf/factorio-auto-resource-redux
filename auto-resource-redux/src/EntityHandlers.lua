@@ -182,22 +182,7 @@ function EntityHandlers.handle_assembler(entity, secondary_recipe)
       storage_amount = storage.items[storage_key] or 0
     end
     local craftable_ratio = math.floor((storage_amount + (input_items[storage_key] or 0)) / math.ceil(ingredient.amount))
-    ingredient_multiplier = math.min(ingredient_multiplier, craftable_ratio)
-    if ingredient_multiplier == 0 then
-      -- print_if(
-      --   entity,
-      --   (
-      --     "%s: Can't craft %s because not enough %s (we have %d, machine has %d, but need %d)"
-      --   ):format(
-      --     entity.gps_tag,
-      --     recipe.name,
-      --     storage_key,
-      --     storage_amount,
-      --     (input_items[storage_key] or 0),
-      --     math.ceil(ingredient.amount)
-      --   ))
-      return
-    end
+    ingredient_multiplier = Util.clamp(craftable_ratio, 1, ingredient_multiplier)
   end
 
   -- insert ingredients

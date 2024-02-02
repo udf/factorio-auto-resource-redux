@@ -156,11 +156,13 @@ end
 
 function Storage.put_in_inventory(storage, inventory, item_name, amount_requested)
   local amount_stored = storage.items[item_name] or 0
-  local amount_can_remove = math.min(amount_stored, amount_requested)
-  local amount_removed = inventory.insert({ name = item_name, count = amount_can_remove })
-  local new_stored_amount = math.max(0, amount_stored - amount_removed)
-  storage.items[item_name] = new_stored_amount
-  return amount_removed
+  local amount_can_give = math.min(amount_stored, amount_requested)
+  if amount_can_give <= 0 then
+    return 0
+  end
+  local amount_given = inventory.insert({ name = item_name, count = amount_can_give })
+  storage.items[item_name] = math.max(0, amount_stored - amount_given)
+  return amount_given
 end
 
 function Storage.add_to_or_replace_stack(storage, stack, item_name, target_count, ignore_limit)
