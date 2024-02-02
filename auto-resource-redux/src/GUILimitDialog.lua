@@ -112,9 +112,6 @@ end
 
 local function on_confirm(event, tags, player)
   local dialog = player.gui.screen[GUICommon.GUI_LIMIT_DIALOG]
-  if not dialog or player.opened ~= dialog then
-    return
-  end
   local storage_key = dialog.tags.item
   local storage = Storage.get_storage(player)
   local new_limit = tonumber(dialog.inner_frame.content.input.text) or Storage.get_item_limit(storage, storage_key)
@@ -122,9 +119,17 @@ local function on_confirm(event, tags, player)
   on_close(event, tags, player)
 end
 
+local function on_gui_confirm(event, tags, player)
+  local dialog = player.gui.screen[GUICommon.GUI_LIMIT_DIALOG]
+  if not dialog or player.opened ~= dialog then
+    return
+  end
+  on_confirm(event, tags, player)
+end
+
 GUIDispatcher.register(defines.events.on_gui_click, CLOSE_BUTTON_EVENT, on_close)
 GUIDispatcher.register(defines.events.on_gui_click, CONFIRM_BUTTON_EVENT, on_confirm)
-GUIDispatcher.register(GUIDispatcher.ON_CONFIRM_KEYPRESS, nil, on_confirm)
+GUIDispatcher.register(GUIDispatcher.ON_CONFIRM_KEYPRESS, nil, on_gui_confirm)
 GUIDispatcher.register(defines.events.on_gui_confirmed, INPUT_CONFIRMED_EVENT, on_confirm)
 GUIDispatcher.register(defines.events.on_gui_closed, GUI_CLOSE_EVENT, on_close)
 GUIDispatcher.register(defines.events.on_gui_closed, nil, on_close)
