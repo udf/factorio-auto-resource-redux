@@ -34,7 +34,11 @@ local function insert_fluids(storage, entity, target_amounts, default_amount)
       goto continue
     end
     fluid = fluid or { name = filter.name, amount = 0 }
-    local amount_needed = math.max(0, (target_amounts[filter.name] or default_amount) - fluid.amount)
+    local target_amount = (target_amounts[filter.name] or default_amount)
+    if target_amount <= 0 then
+      goto continue
+    end
+    local amount_needed = math.max(0, target_amount - fluid.amount)
     local amount_removed = Storage.remove_fluid_in_temperature_range(
       storage,
       Storage.get_fluid_storage_key(filter.name),

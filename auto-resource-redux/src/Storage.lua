@@ -230,7 +230,10 @@ function Storage.add_fluid(storage, fluid, ignore_limit)
 end
 
 function Storage.remove_fluid_in_temperature_range(storage, storage_key, min_temp, max_temp, amount_to_remove)
-  local fluid = storage.items[storage_key] or {}
+  local fluid = storage.items[storage_key]
+  if not fluid then
+    return 0
+  end
   min_temp = math.floor(min_temp or -math.huge)
   max_temp = math.floor(max_temp or math.huge)
   amount_to_remove = math.ceil(amount_to_remove)
