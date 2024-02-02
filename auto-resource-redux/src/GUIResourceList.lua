@@ -139,7 +139,6 @@ local function on_button_clicked(event, tags, player)
       ) then
     event.element.destroy()
     storage.items[storage_key] = nil
-    ItemPriorityManager.recalculate_priority_items(storage, Storage)
     return
   end
   if is_fluid then
