@@ -4,7 +4,7 @@ local Storage = require "src.Storage"
 
 -- "arr" stands for auto resource redux, matey
 GUICommon.GUI_LOGO_BUTTON = "arr-logo-button"
-GUICommon.GUI_RESOURCE_TABLE = "arr-table"
+GUICommon.GUI_RESOURCE_TABLE = "arr-res-tables"
 GUICommon.GUI_LIMIT_DIALOG = "arr-limit-diag"
 GUICommon.GUI_ITEM_PRIORITY = "arr-priority-list"
 
@@ -14,6 +14,9 @@ local mouse_button_str = {
   [defines.mouse_button_type.right] = "right",
   [defines.mouse_button_type.middle] = "middle",
 }
+
+-- awful hack to export res table function, this will be assigned in GUIResourceList
+GUICommon.get_or_create_reslist_button = nil
 
 function GUICommon.get_click_str(event)
   local str = ""

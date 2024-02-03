@@ -26,6 +26,7 @@ local function initialise()
   Storage.initialise()
   EntityManager.initialise()
   LogisticManager.initialise()
+  GUIResourceList.initialise()
 end
 
 local function on_tick()

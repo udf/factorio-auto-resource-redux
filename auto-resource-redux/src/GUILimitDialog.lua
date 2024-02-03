@@ -11,7 +11,7 @@ local INPUT_CONFIRMED_EVENT = "arr-limit-input-confirm"
 
 
 local function highlight_reslist_button(player, storage_key, state)
-  local elem = player.gui.top[GUICommon.GUI_RESOURCE_TABLE][storage_key]
+  local elem = GUICommon.get_or_create_reslist_button(player, storage_key)
   elem.toggled = state == true
 end
 
