@@ -1,16 +1,18 @@
 local Storage = {}
 local DomainStore = require "src.DomainStore";
-local ItemPriorityManager = require "src.ItemPriorityManager";
 local Util = require "src.Util"
 
--- TODO: config for this
+-- Don't store items that contain extra data, because the data would be lost
 local blacklisted_item_types = {
   ["armor"] = true,
   ["deconstruction-item"] = true,
   ["blueprint"] = true,
   ["upgrade-item"] = true,
   ["blueprint-book"] = true,
-  ["spidertron-remote"] = true
+  ["spidertron-remote"] = true,
+  ["item-with-inventory"] = true,
+  ["item-with-entity-data"] = true,
+  ["item-with-tags"] = true
 }
 
 local DEFAULT_FLUID_LIMIT = 25000
