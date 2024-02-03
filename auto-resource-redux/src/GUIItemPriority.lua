@@ -1,4 +1,5 @@
 local GUIItemPriority = {}
+local flib_table = require("__flib__/table")
 local ItemPriorityManager = require "src.ItemPriorityManager"
 local GUICommon = require "src.GUICommon"
 local GUIDispatcher = require "src.GUIDispatcher"
@@ -6,39 +7,10 @@ local GUIComponentItemPrioritySet = require "src.GUIComponentItemPrioritySet"
 local R = require "src.RichText"
 
 local GUI_CLOSE_EVENT = "arr-priority-close"
+local COPY_TO_ALL_EVENT = "arr-priority-copy-to-all"
 
 
-function GUIItemPriority.open(player)
-  local screen = player.gui.screen
-  local window = screen[GUICommon.GUI_ITEM_PRIORITY]
-  if window then
-    window.destroy()
-    return
-  end
-
-  window = screen.add({
-    type = "frame",
-    name = GUICommon.GUI_ITEM_PRIORITY,
-    direction = "vertical",
-    tags = { event = GUI_CLOSE_EVENT },
-    style = "inner_frame_in_outer_frame"
-  })
-  player.opened = window
-  window.auto_center = true
-
-  GUICommon.create_header(window, "Manage Item Priorities", GUI_CLOSE_EVENT)
-
-  local inner_frame = window.add({
-    type = "frame",
-    style = "inside_deep_frame_for_tabs"
-  })
-
-  local tabbed_pane = inner_frame.add({
-    type = "tabbed-pane",
-    style = "logistic_gui_tabbed_pane"
-  })
-
-  local priority_sets = ItemPriorityManager.get_priority_sets(player)
+local function add_tab_contents(tabbed_pane, priority_sets)
   -- group priority sets into G[group][entity_name] = {set_keys}
   local grouped_priority_sets = {}
   local groups_with_subitem_column = {}
@@ -61,13 +33,27 @@ function GUIItemPriority.open(player)
     ::continue::
   end
 
+  local old_tabs = {}
+  local old_content_flows = {}
+  for _, tab in ipairs(tabbed_pane.tabs) do
+    old_tabs[tab.tab.name] = tab.tab
+    old_content_flows[tab.tab.name] = tab.content
+  end
   for group, entities in pairs(grouped_priority_sets) do
-    local tab = tabbed_pane.add({ type = "tab", caption = group })
-    local tab_content_flow = tabbed_pane.add({
+    local tab = old_tabs[group] or tabbed_pane.add({
+      type = "tab",
+      caption = group,
+      name = group
+    })
+    local tab_content_flow = old_content_flows[group] or tabbed_pane.add({
       type = "frame",
       direction = "vertical",
       style = "invisible_frame"
     })
+    tab_content_flow.clear()
+    if old_tabs[group] == nil then
+      tabbed_pane.add_tab(tab, tab_content_flow)
+    end
     local subheader = tab_content_flow.add({
       type = "frame",
       style = "subheader_frame_with_top_border",
@@ -108,16 +94,13 @@ function GUIItemPriority.open(player)
       vertical_centering = true,
       style = "bordered_table"
     })
-    tabbed_pane.add_tab(tab, tab_content_flow)
 
     for entity_name, set_keys in pairs(entities) do
       local entity_sprite = content_table.add({
         type = "sprite",
         sprite = "entity/" .. entity_name,
         elem_tooltip = { type = "entity", name = entity_name },
-        -- resize_to_sprite = false
       })
-      -- entity_sprite.style.size = {32, 32}
       local content_flow = content_table.add({
         type = "flow",
         direction = "vertical",
@@ -130,6 +113,22 @@ function GUIItemPriority.open(player)
           direction = "horizontal",
           style = "player_input_horizontal_flow"
         })
+
+        local set_all_button = controls_flow.add({
+          type = "sprite-button",
+          sprite = "arr-asterisk-icon",
+          resize_to_sprite = false,
+          tooltip = table.concat({
+            "Copy settings to this tab.\n",
+            R.HINT, "Shift + Left-click", R.HINT_END, " to copy quantities too.",
+          }),
+          tags = {
+            event = COPY_TO_ALL_EVENT,
+            domain = priority_sets.domain_key,
+            key = set_key
+          }
+        })
+        set_all_button.style.size = { 28, 28 }
 
         if priority_set.sub_item_name then
           controls_flow.add({
@@ -150,14 +149,87 @@ function GUIItemPriority.open(player)
   end
 end
 
--- TODO on_tick updates???
+
+function GUIItemPriority.open(player)
+  local screen = player.gui.screen
+  local window = screen[GUICommon.GUI_ITEM_PRIORITY]
+  if window then
+    window.destroy()
+    return
+  end
+
+  window = screen.add({
+    type = "frame",
+    name = GUICommon.GUI_ITEM_PRIORITY,
+    direction = "vertical",
+    tags = { event = GUI_CLOSE_EVENT },
+    style = "inner_frame_in_outer_frame"
+  })
+  player.opened = window
+  window.auto_center = true
+
+  GUICommon.create_header(window, "Manage Item Priorities", GUI_CLOSE_EVENT)
+
+  local inner_frame = window.add({
+    type = "frame",
+    style = "inside_deep_frame_for_tabs",
+    name = "inner_frame"
+  })
+
+  local tabbed_pane = inner_frame.add({
+    type = "tabbed-pane",
+    style = "logistic_gui_tabbed_pane",
+    name = "tabbed_pane"
+  })
+
+  local priority_sets = ItemPriorityManager.get_priority_sets(player)
+  add_tab_contents(tabbed_pane, priority_sets)
+end
 
 function on_close(event, tags, player)
   local window = player.gui.screen[GUICommon.GUI_ITEM_PRIORITY]
   window.destroy()
 end
 
+function on_copy_to_all(event, tags, player)
+  local click_str = GUICommon.get_click_str(event)
+  local copy_counts = (click_str == "shift-left")
+  if click_str ~= "left" and click_str ~= "shift-left" then
+    return
+  end
+  local priority_sets = ItemPriorityManager.get_priority_sets_for_domain(tags.domain)
+  local priority_set = priority_sets[tags.key]
+  local group = priority_set.group
+  local category = priority_set.category
+  local num_changed = 0
+  for set_key, other_set in pairs(priority_sets) do
+    if set_key ~= tags.key and other_set.group == group and other_set.category == category then
+      other_set.item_order = flib_table.shallow_copy(priority_set.item_order)
+      if copy_counts then
+        other_set.item_counts = flib_table.shallow_copy(priority_set.item_counts)
+      else
+        -- copy blacklist status
+        for item_name, count in pairs(priority_set.item_counts) do
+          local other_count = math.abs(other_set.item_counts[item_name])
+          other_set.item_counts[item_name] = count > 0 and other_count or -other_count
+        end
+      end
+      num_changed = num_changed + 1
+    end
+  end
+  if num_changed > 0 then
+    player.create_local_flying_text({
+      text = ("Copied settings to %d list(s)"):format(num_changed),
+      create_at_cursor = true
+    })
+    local window = player.gui.screen[GUICommon.GUI_ITEM_PRIORITY]
+    local tabbed_pane = window.inner_frame.tabbed_pane
+    add_tab_contents(tabbed_pane, priority_sets)
+  end
+end
+
 GUIDispatcher.register(defines.events.on_gui_click, GUI_CLOSE_EVENT, on_close)
+GUIDispatcher.register(defines.events.on_gui_click, COPY_TO_ALL_EVENT, on_copy_to_all)
 GUIDispatcher.register(defines.events.on_gui_closed, GUI_CLOSE_EVENT, on_close)
 
 
