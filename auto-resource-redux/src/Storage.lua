@@ -146,8 +146,8 @@ function Storage.take_all_from_inventory(storage, inventory, ignore_limit)
     local amount_added = add_item_or_fluid(storage, item, amount, ignore_limit)
     if amount_added > 0 then
       inventory.remove({ name = item, count = amount_added })
+      added_items[item] = amount_added
     end
-    added_items[item] = amount_added
     local amount_remaining = amount - amount_added
     if amount_remaining > 0 then
       remaining_items[item] = amount_remaining
