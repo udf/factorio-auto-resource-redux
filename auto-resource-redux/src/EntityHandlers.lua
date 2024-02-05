@@ -9,26 +9,29 @@ local Util = require "src.Util"
 
 local function store_fluids(storage, entity, prod_type_pattern, ignore_limit)
   local remaining_fluids = {}
+  local inserted = false
   prod_type_pattern = prod_type_pattern or "^"
   for i, fluid in Util.iter_fluidboxes(entity, prod_type_pattern, false) do
     local new_fluid, amount_added = Storage.add_fluid(storage, fluid, ignore_limit)
     local fluid_key = Storage.get_fluid_storage_key(fluid.name)
     if amount_added > 0 then
       entity.fluidbox[i] = new_fluid.amount > 0 and new_fluid or nil
+      inserted = true
     end
     if new_fluid.amount > 0 then
       remaining_fluids[fluid_key] = new_fluid.amount
     end
   end
-  return remaining_fluids
+  return remaining_fluids, inserted
 end
 
 function EntityHandlers.store_all_fluids(entity)
-  store_fluids(Storage.get_storage(entity), entity, "^", true)
+  return store_fluids(Storage.get_storage(entity), entity, "^", true)
 end
 
 local function insert_fluids(storage, entity, target_amounts, default_amount)
   default_amount = default_amount or 0
+  local inserted = false
   for i, fluid, filter, proto in Util.iter_fluidboxes(entity, "^", true) do
     if not filter or proto.production_type == "output" then
       goto continue
@@ -46,25 +49,27 @@ local function insert_fluids(storage, entity, target_amounts, default_amount)
       filter.maximum_temperature,
       amount_needed
     )
+    inserted = true
     -- We could compute the new temperature but recipes don't take the specific temperature into account
     fluid.amount = fluid.amount + amount_removed
     entity.fluidbox[i] = fluid.amount > 0 and fluid or nil
     ::continue::
   end
+  return inserted
 end
 
 local function insert_using_priority_set(storage, entity, priority_set_key, stack, filter_name)
   local priority_sets = ItemPriorityManager.get_priority_sets(entity)
   if not priority_sets[priority_set_key] then
     log(("FIXME: missing priority set \"%s\" for %s!"):format(priority_set_key, entity.name))
-    return
+    return false
   end
   local usable_items = ItemPriorityManager.get_ordered_items(priority_sets, priority_set_key)
   if filter_name then
     usable_items = { [filter_name] = usable_items[filter_name] }
   end
   if table_size(usable_items) == 0 then
-    return
+    return false
   end
 
   local current_count = stack.count
@@ -86,8 +91,8 @@ local function insert_using_priority_set(storage, entity, priority_set_key, stac
       local new_satisfaction = math.min(1, stored_amount / wanted_amount)
 
       if new_satisfaction >= current_satisfaction then
-        Storage.add_to_or_replace_stack(storage, stack, item_name, wanted_amount, true)
-        break
+        local amount_added = Storage.add_to_or_replace_stack(storage, stack, item_name, wanted_amount, true)
+        return amount_added > 0
       end
     end
     if item_name == current_item then
@@ -96,24 +101,26 @@ local function insert_using_priority_set(storage, entity, priority_set_key, stac
     end
     ::continue::
   end
+  return false
 end
 
 local function insert_fuel(storage, entity)
   local inventory = entity.get_fuel_inventory()
   if inventory then
-    insert_using_priority_set(
+    return insert_using_priority_set(
       storage,
       entity,
       ItemPriorityManager.get_fuel_key(entity.name),
       inventory[1]
     )
   end
+  return false
 end
 
 function EntityHandlers.handle_assembler(entity, secondary_recipe)
   local recipe = entity.get_recipe() or secondary_recipe
   if recipe == nil then
-    return
+    return false
   end
 
   -- always try to pick up outputs
@@ -139,29 +146,11 @@ function EntityHandlers.handle_assembler(entity, secondary_recipe)
 
     -- skip crafting if any slot contains 1x or more products
     if (remaining_items[storage_key] or 0) >= amount_produced then
-      -- print_if(
-      --   entity,
-      --   string.format(
-      --     "%s: Not crafting recipe %s because %d remaining %s >= %d per cycle",
-      --     entity.gps_tag,
-      --     recipe.name,
-      --     remaining_items[storage_key],
-      --     storage_key,
-      --     amount_produced
-      --   ))
-      return
+      return false
     end
   end
   if not has_empty_slot then
-    -- print_if(
-    --   entity,
-    --   string.format(
-    --     "%s: Not crafting recipe %s because there are no empty output slots remaining=%s",
-    --     entity.gps_tag,
-    --     recipe.name,
-    --     serpent.block(remaining_items)
-    --   ))
-    return
+    return false
   end
 
   local crafts_per_second = entity.crafting_speed / recipe.energy
@@ -195,6 +184,7 @@ function EntityHandlers.handle_assembler(entity, secondary_recipe)
 
   -- insert ingredients
   local fluid_targets = {}
+  local inserted = false
   for _, ingredient in ipairs(recipe.ingredients) do
     local target_amount = math.ceil(ingredient.amount) * ingredient_multiplier
     if ingredient.type == "fluid" then
@@ -202,50 +192,59 @@ function EntityHandlers.handle_assembler(entity, secondary_recipe)
     else
       local amount_needed = target_amount - (input_items[ingredient.name] or 0)
       if amount_needed > 0 then
-        Storage.put_in_inventory(storage, input_inventory, ingredient.name, amount_needed)
+        local amount_inserted = Storage.put_in_inventory(storage, input_inventory, ingredient.name, amount_needed)
+        inserted = inserted or (amount_inserted > 0)
       end
     end
   end
-  insert_fluids(storage, entity, fluid_targets)
+  inserted = inserted or insert_fluids(storage, entity, fluid_targets)
+  return inserted
 end
 
 function EntityHandlers.handle_furnace(entity)
   local recipe = entity.get_recipe() or entity.previous_recipe
+  local busy = false
   if recipe then
     local storage = Storage.get_storage(entity)
-    insert_fuel(storage, entity)
-    EntityHandlers.handle_assembler(entity, recipe)
+    busy = busy or insert_fuel(storage, entity)
+    busy = busy or EntityHandlers.handle_assembler(entity, recipe)
   end
+  return busy
 end
 
 function EntityHandlers.handle_lab(entity)
   local pack_count_target = math.ceil(entity.speed_bonus * 0.5) + 1
   local lab_inv = entity.get_inventory(defines.inventory.lab_input)
   local storage = Storage.get_storage(entity)
+  local inserted = false
   for i, item_name in ipairs(game.entity_prototypes[entity.name].lab_inputs) do
-    Storage.add_to_or_replace_stack(storage, lab_inv[i], item_name, pack_count_target)
+    local amount_inserted = Storage.add_to_or_replace_stack(storage, lab_inv[i], item_name, pack_count_target)
+    inserted = inserted or (amount_inserted > 0)
   end
+  return inserted
 end
 
 function EntityHandlers.handle_mining_drill(entity)
   local storage = Storage.get_storage(entity)
-  insert_fuel(storage, entity)
+  local busy = insert_fuel(storage, entity)
   if #entity.fluidbox > 0 then
     -- there is no easy way to know what fluid a miner wants, the fluid is a property of the ore's prototype
     -- and the expected resources aren't simple to find: https://forums.factorio.com/viewtopic.php?p=247019
     -- so it will have to be done manually using the fluid access tank
-    store_fluids(storage, entity, "output")
+    local _, inserted = store_fluids(storage, entity, "output")
+    busy = busy or inserted
   end
+  return busy
 end
 
 function EntityHandlers.handle_boiler(entity)
   local storage = Storage.get_storage(entity)
-  insert_fuel(storage, entity)
+  return insert_fuel(storage, entity)
 end
 
 function EntityHandlers.handle_turret(entity)
   local storage = Storage.get_storage(entity)
-  insert_using_priority_set(
+  return insert_using_priority_set(
     storage,
     entity,
     ItemPriorityManager.get_ammo_key(entity.name, 1),
@@ -255,11 +254,11 @@ end
 
 function EntityHandlers.handle_car(entity)
   local storage = Storage.get_storage(entity)
-  insert_fuel(storage, entity)
+  local busy = insert_fuel(storage, entity)
   local ammo_inventory = entity.get_inventory(defines.inventory.car_ammo)
   if ammo_inventory then
     for i = 1, #ammo_inventory do
-      insert_using_priority_set(
+      busy = busy or insert_using_priority_set(
         storage,
         entity,
         ItemPriorityManager.get_ammo_key(entity.name, i),
@@ -268,24 +267,27 @@ function EntityHandlers.handle_car(entity)
       )
     end
   end
-  -- TODO: maybe fulfil some inventory filters?
+  return busy
 end
 
 function EntityHandlers.handle_sink_chest(entity, ignore_limit)
   local storage = Storage.get_storage(entity)
-  Storage.take_all_from_inventory(storage, entity.get_output_inventory(), ignore_limit)
+  local added_items, _ = Storage.take_all_from_inventory(storage, entity.get_output_inventory(), ignore_limit)
+  return table_size(added_items) > 0
 end
 
 function EntityHandlers.handle_sink_tank(entity)
   local storage = Storage.get_storage(entity)
   local fluid = entity.fluidbox[1]
   if fluid == nil then
-    return
+    return false
   end
   local new_fluid, amount_added = Storage.add_fluid(storage, fluid)
   if amount_added > 0 then
     entity.fluidbox[1] = new_fluid.amount > 0 and new_fluid or nil
+    return true
   end
+  return false
 end
 
 return EntityHandlers
