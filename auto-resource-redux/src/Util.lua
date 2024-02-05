@@ -118,7 +118,7 @@ function Util.get_next_updatable(state_key, min_tick_diff, t)
   end
 
   local last_updates = global[last_update_key]
-  if next(t, last_table_key) == nil then
+  if t[last_table_key] == nil or next(t, last_table_key) == nil then
     last_table_key = nil
   end
 
