@@ -1,10 +1,10 @@
-local GUIComponentSliderInput = require "src.GUIComponentSliderInput"
 GUIComponentItemPrioritySet = {}
 
 local flib_table = require("__flib__/table")
+local GUICommon = require "src.GUICommon"
+local GUIComponentSliderInput = require "src.GUIComponentSliderInput"
 local GUIDispatcher = require "src.GUIDispatcher"
 local ItemPriorityManager = require "src.ItemPriorityManager"
-local GUICommon = require "src.GUICommon"
 local R = require "src.RichText"
 
 local BUTTON_CLICK_EVENT = "arr-component-priority-set-button"
@@ -47,7 +47,8 @@ local function update_slider(slider_flow, priority_sets, set_key)
   slider_flow.slider.style.size = { 194, 12 }
 end
 
-local function update_buttons(table_elem, priority_sets, set_key)
+local function update_buttons(table_elem, priority_sets)
+  local set_key = table_elem.tags.key
   local slider_flow = table_elem.parent.parent.slider_flow
   local selected_item = slider_flow.tags.item
   local items = ItemPriorityManager.get_ordered_items(priority_sets, set_key)
@@ -75,6 +76,48 @@ local function update_buttons(table_elem, priority_sets, set_key)
   end
 
   update_slider(slider_flow, priority_sets, set_key)
+end
+
+local function get_component_key(domain_key, set_key)
+  return domain_key .. "-" .. set_key
+end
+
+local function clear_invalid_components(component_key)
+  global.priority_set_components[component_key] = flib_table.filter(
+    global.priority_set_components[component_key] or {},
+    function(elem, key)
+      return elem.valid
+    end,
+    true
+  )
+end
+
+local function register_component(table_elem)
+  if global.priority_set_components == nil then
+    global.priority_set_components = {}
+  end
+
+  local component_key = table_elem.tags.component_key
+  clear_invalid_components(component_key)
+  table.insert(global.priority_set_components[component_key], table_elem)
+end
+
+local function update_components(src_elem, priority_sets, update_src)
+  local component_key = src_elem.tags.component_key
+  clear_invalid_components(component_key)
+  for _, table_elem in ipairs(global.priority_set_components[component_key] or {}) do
+    if update_src or table_elem ~= src_elem then
+      update_buttons(table_elem, priority_sets)
+    end
+  end
+end
+
+function GUIComponentItemPrioritySet.update_by_key(priority_sets, domain_key, set_key)
+  local component_key = get_component_key(domain_key, set_key)
+  clear_invalid_components(component_key)
+  for _, table_elem in ipairs(global.priority_set_components[component_key] or {}) do
+    update_buttons(table_elem, priority_sets)
+  end
 end
 
 local function table_swap(t, i1, i2)
@@ -108,12 +151,17 @@ function GUIComponentItemPrioritySet.create(parent, priority_sets, set_key)
     name = "table_frame",
     style = "arr_deep_frame",
   })
-  local table = table_frame.add({
+  local component_key = get_component_key(priority_sets.domain_key, set_key)
+  local table_elem = table_frame.add({
     type = "table",
     name = "table",
     column_count = 10,
     style = "logistics_slot_table",
-    tags = { domain = priority_sets.domain_key, key = set_key }
+    tags = {
+      domain = priority_sets.domain_key,
+      key = set_key,
+      component_key = component_key
+    }
   })
 
   local slider_flow = main_flow.add({
@@ -125,14 +173,16 @@ function GUIComponentItemPrioritySet.create(parent, priority_sets, set_key)
   slider_flow.style.left_padding = 4
   slider_flow.visible = false
 
-  update_buttons(table, priority_sets, set_key)
+  update_buttons(table_elem, priority_sets)
+  register_component(table_elem)
 end
 
 local function on_slider_input_changed(event, tags, player)
   local slider_flow = event.element.parent
   local item_name = slider_flow.tags.item
   local slider = slider_flow.slider
-  local priority_sets = ItemPriorityManager.get_priority_sets_for_domain(slider_flow.tags.domain)
+  local domain_key = slider_flow.tags.domain
+  local priority_sets = ItemPriorityManager.get_priority_sets_for_domain(domain_key)
   local set_key = slider_flow.tags.key
   local priority_set = priority_sets[set_key]
   priority_set.item_counts[item_name] = slider.slider_value
@@ -140,12 +190,14 @@ local function on_slider_input_changed(event, tags, player)
   local table_elem = slider_flow.parent.table_frame.table
   local button = table_elem[item_name]
   button.number = slider.slider_value
+  update_components(table_elem, priority_sets, false)
 end
 
 local function on_button_click(event, tags, player)
   local click_str = GUICommon.get_click_str(event)
   local table_elem = event.element.parent
-  local priority_sets = ItemPriorityManager.get_priority_sets_for_domain(table_elem.tags.domain)
+  local domain_key = table_elem.tags.domain
+  local priority_sets = ItemPriorityManager.get_priority_sets_for_domain(domain_key)
   local set_key = table_elem.tags.key
   local priority_set = priority_sets[set_key]
   local clicked_item_name = event.element.name
@@ -160,12 +212,11 @@ local function on_button_click(event, tags, player)
       slider_flow.tags = {}
     elseif clicked_item_count > 0 then
       slider_flow.tags = {
-        domain = table_elem.tags.domain,
+        domain = domain_key,
         key = set_key,
         item = clicked_item_name,
       }
     end
-    update_slider(slider_flow, priority_sets, set_key)
     updated = true
   end
 
@@ -188,7 +239,7 @@ local function on_button_click(event, tags, player)
   end
 
   if updated then
-    update_buttons(table_elem, priority_sets, set_key)
+    update_components(table_elem, priority_sets, true)
   end
 end
 

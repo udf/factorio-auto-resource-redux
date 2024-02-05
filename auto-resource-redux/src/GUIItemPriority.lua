@@ -33,27 +33,18 @@ local function add_tab_contents(tabbed_pane, priority_sets)
     ::continue::
   end
 
-  local old_tabs = {}
-  local old_content_flows = {}
-  for _, tab in ipairs(tabbed_pane.tabs) do
-    old_tabs[tab.tab.name] = tab.tab
-    old_content_flows[tab.tab.name] = tab.content
-  end
   for group, entities in pairs(grouped_priority_sets) do
-    local tab = old_tabs[group] or tabbed_pane.add({
+    local tab = tabbed_pane.add({
       type = "tab",
       caption = group,
       name = group
     })
-    local tab_content_flow = old_content_flows[group] or tabbed_pane.add({
+    local tab_content_flow = tabbed_pane.add({
       type = "frame",
       direction = "vertical",
       style = "invisible_frame"
     })
-    tab_content_flow.clear()
-    if old_tabs[group] == nil then
-      tabbed_pane.add_tab(tab, tab_content_flow)
-    end
+    tabbed_pane.add_tab(tab, tab_content_flow)
     local subheader = tab_content_flow.add({
       type = "frame",
       style = "subheader_frame_with_top_border",
@@ -149,7 +140,6 @@ local function add_tab_contents(tabbed_pane, priority_sets)
   end
 end
 
-
 function GUIItemPriority.open(player)
   local screen = player.gui.screen
   local window = screen[GUICommon.GUI_ITEM_PRIORITY]
@@ -201,7 +191,7 @@ function on_copy_to_all(event, tags, player)
   local priority_set = priority_sets[tags.key]
   local group = priority_set.group
   local category = priority_set.category
-  local num_changed = 0
+  local changed_keys = {}
   for set_key, other_set in pairs(priority_sets) do
     if set_key ~= tags.key and other_set.group == group and other_set.category == category then
       other_set.item_order = flib_table.shallow_copy(priority_set.item_order)
@@ -214,17 +204,17 @@ function on_copy_to_all(event, tags, player)
           other_set.item_counts[item_name] = count > 0 and other_count or -other_count
         end
       end
-      num_changed = num_changed + 1
+      table.insert(changed_keys, set_key)
     end
   end
-  if num_changed > 0 then
+  if #changed_keys > 0 then
     player.create_local_flying_text({
-      text = ("Copied settings to %d list(s)"):format(num_changed),
+      text = ("Copied settings to %d list(s)"):format(#changed_keys),
       create_at_cursor = true
     })
-    local window = player.gui.screen[GUICommon.GUI_ITEM_PRIORITY]
-    local tabbed_pane = window.inner_frame.tabbed_pane
-    add_tab_contents(tabbed_pane, priority_sets)
+    for _, set_key in ipairs(changed_keys) do
+      GUIComponentItemPrioritySet.update_by_key(priority_sets, tags.domain, set_key)
+    end
   end
 end
 
