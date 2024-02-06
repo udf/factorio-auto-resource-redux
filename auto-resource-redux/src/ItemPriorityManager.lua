@@ -8,7 +8,6 @@ local EntityGroups = require "src.EntityGroups"
 local DEFAULT_VEHICLE_AMMO_AMOUNT = 10
 local FUEL_BURN_SECONDS_TARGET = 90
 
--- TODO: loading stuff into local variable might cause desync
 local default_priority_sets = {}
 
 local function get_new_priority_sets(domain_key)

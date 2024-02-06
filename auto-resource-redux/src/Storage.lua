@@ -28,7 +28,6 @@ local default_item_subgroup_stacks = {
   ["ammo"] = 5
 }
 
--- TODO: loading stuff into local variable might cause desync
 local blacklisted_items = {}
 
 local function default_storage(domain_key)
