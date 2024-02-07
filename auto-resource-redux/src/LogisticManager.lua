@@ -62,7 +62,7 @@ end
 local function handle_items_request(storage, player, entity, item_requests)
   local nets = entity.surface.find_logistic_networks_by_construction_area(entity.position, player.force)
   for _, net in ipairs(nets) do
-    if net.all_construction_robots > 0 then
+    if net.available_construction_robots > 0 then
       local gave_items = false
 
       for item_name, needed_count in pairs(item_requests) do
