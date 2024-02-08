@@ -138,6 +138,13 @@ end
 
 --- Items
 
+function Storage.remove_item(storage, item_name, amount)
+  local amount_stored = storage.items[item_name] or 0
+  local amount_to_give = math.min(amount_stored, amount)
+  storage.items[item_name] = math.max(0, amount_stored - amount_to_give)
+  return amount_to_give
+end
+
 function Storage.take_all_from_inventory(storage, inventory, ignore_limit)
   local added_items = {}
   local remaining_items = {}
