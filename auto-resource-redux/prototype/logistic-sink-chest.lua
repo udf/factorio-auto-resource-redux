@@ -11,16 +11,17 @@ sink_chest.animation = {
   priority = "extra-high",
   scale = 0.5,
   draw_as_glow = true,
-  tint = { 1, 0.74, 0 }
+  tint = { 1, 0.74, 0 },
+  shift = {0, -0.25}
 }
 sink_chest.integration_patch = {
   direction_count = 1,
   filename = "__auto-resource-redux__/graphics/sink-chest-integration.png",
-  priority = "low",
+  priority = "extra-high",
   width = 72,
   height = 34,
   scale = 0.5,
-  shift = { 0.07, 0.25 },
+  shift = { 0.07, 0 },
 }
 sink_chest.corpse = "arr-logistic-sink-chest-remnants"
 
@@ -34,7 +35,7 @@ sink_chest_remnants.animation = {
   width = 72,
   height = 38,
   scale = 0.5,
-  shift = { 0.07, 0.25 },
+  shift = { 0.07, 0 },
 }
 
 local sink_chest_recipe = {
