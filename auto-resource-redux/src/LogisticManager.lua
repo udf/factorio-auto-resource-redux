@@ -59,6 +59,14 @@ local function get_entity_key(entity)
   return entity.unit_number or string.format("%s,%s", entity.position.x, entity.position.y)
 end
 
+local function mark_chests_as_busy(net)
+  for _, entity in ipairs(net.storages) do
+    if entity.name == "arr-logistic-sink-chest" then
+      global.busy_logistic_chests[entity.unit_number] = game.tick + TICKS_PER_ALERT_TRANSFER
+    end
+  end
+end
+
 local function handle_items_request(storage, player, entity, item_requests)
   local nets = entity.surface.find_logistic_networks_by_construction_area(entity.position, player.force)
   for _, net in ipairs(nets) do
@@ -75,6 +83,8 @@ local function handle_items_request(storage, player, entity, item_requests)
       end
 
       if gave_items then
+        mark_chests_as_busy(net)
+        global.alert_build_transfers[get_entity_key(entity)] = game.tick + TICKS_PER_ALERT_TRANSFER
         return true
       end
     end
@@ -82,16 +92,16 @@ local function handle_items_request(storage, player, entity, item_requests)
   return false
 end
 
-local function clean_up_handled_alerts(alert_table)
-  for alert_key, deadline in pairs(alert_table) do
+local function clean_up_deadline_table(deadlines)
+  for key, deadline in pairs(deadlines) do
     if game.tick >= deadline then
-      alert_table[alert_key] = nil
+      deadlines[key] = nil
     end
   end
 end
 
 local function handle_player_alerts(player)
-  clean_up_handled_alerts(global.alert_build_transfers)
+  clean_up_deadline_table(global.alert_build_transfers)
   local storage = Storage.get_storage(player)
   local alerts = player.get_alerts({ type = defines.alert_type.no_material_for_construction })
   for surface_id, alerts_by_type in pairs(alerts) do
@@ -100,8 +110,7 @@ local function handle_player_alerts(player)
         goto continue
       end
       local entity = alert.target
-      local alert_key = get_entity_key(entity)
-      if global.alert_build_transfers[alert_key] then
+      if global.alert_build_transfers[get_entity_key(entity)] then
         goto continue
       end
       local item_requests = {}
@@ -119,14 +128,14 @@ local function handle_player_alerts(player)
           item_requests[stack.name] = stack.count
         end
       end
-      if table_size(item_requests) > 0 and handle_items_request(storage, player, entity, item_requests) then
-        global.alert_build_transfers[alert_key] = game.tick + TICKS_PER_ALERT_TRANSFER
+      if table_size(item_requests) > 0 then
+        handle_items_request(storage, player, entity, item_requests)
       end
       ::continue::
     end
   end
 
-  clean_up_handled_alerts(global.alert_repair_transfers)
+  clean_up_deadline_table(global.alert_repair_transfers)
   alerts = player.get_alerts({ type = defines.alert_type.not_enough_repair_packs })
   for surface_id, alerts_by_type in pairs(alerts) do
     for _, alert in ipairs(alerts_by_type[defines.alert_type.not_enough_repair_packs]) do
@@ -138,12 +147,20 @@ local function handle_player_alerts(player)
         goto continue
       end
       -- TODO: don't hardcode repair pack item
-      if handle_items_request(storage, player, alert.target, { ["repair-pack"] = 1 }) then
-        global.alert_repair_transfers[alert_key] = game.tick + TICKS_PER_ALERT_TRANSFER
-      end
+      handle_items_request(storage, player, alert.target, { ["repair-pack"] = 1 })
       ::continue::
     end
   end
+end
+
+function  LogisticManager.handle_logistic_sink_chest(entity)
+  clean_up_deadline_table(global.busy_logistic_chests)
+  if global.busy_logistic_chests[entity.unit_number] then
+    return false
+  end
+  local storage = Storage.get_storage(entity)
+  local added_items, _ = Storage.take_all_from_inventory(storage, entity.get_output_inventory(), true)
+  return table_size(added_items) > 0
 end
 
 function LogisticManager.initialise()
@@ -152,6 +169,9 @@ function LogisticManager.initialise()
   end
   if global.alert_repair_transfers == nil then
     global.alert_repair_transfers = {}
+  end
+  if global.busy_logistic_chests == nil then
+    global.busy_logistic_chests = {}
   end
 end
 

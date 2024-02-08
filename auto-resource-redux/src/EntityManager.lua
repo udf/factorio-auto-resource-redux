@@ -2,20 +2,22 @@ local EntityManager = {}
 
 local EntityGroups = require "src.EntityGroups"
 local EntityHandlers = require "src.EntityHandlers"
+local LogisticManager = require "src.LogisticManager"
 local LoopBuffer = require "src.LoopBuffer"
 local Util = require "src.Util"
 
 -- TODO: fluid access, logistic chests (call into logistic mananager)
 local entity_queue_specs = {
   ["sink-chest"] = { handler = EntityHandlers.handle_sink_chest, n_per_tick = 20 },
-  ["sink-tank"] = { handler = EntityHandlers.handle_sink_tank, n_per_tick = 20 },
+  ["sink-tank"] = { handler = EntityHandlers.handle_sink_tank },
+  ["logistic-sink-chest"] = { handler = LogisticManager.handle_logistic_sink_chest, n_per_tick = 1 },
   ["car"] = { handler = EntityHandlers.handle_car },
   ["ammo-turret"] = { handler = EntityHandlers.handle_turret },
   ["boiler"] = { handler = EntityHandlers.handle_boiler },
   ["mining-drill"] = { handler = EntityHandlers.handle_mining_drill },
   ["furnace"] = { handler = EntityHandlers.handle_furnace },
   ["assembling-machine"] = { handler = EntityHandlers.handle_assembler },
-  ["lab"] = { handler = EntityHandlers.handle_lab },
+  ["lab"] = { handler = EntityHandlers.handle_lab, n_per_tick = 2 },
 }
 
 local function manage_entity(entity)
