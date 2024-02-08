@@ -176,12 +176,12 @@ function GUIItemPriority.open(player)
   add_tab_contents(tabbed_pane, priority_sets)
 end
 
-function on_close(event, tags, player)
+local function on_close(event, tags, player)
   local window = player.gui.screen[GUICommon.GUI_ITEM_PRIORITY]
   window.destroy()
 end
 
-function on_copy_to_all(event, tags, player)
+local function on_copy_to_all(event, tags, player)
   local click_str = GUICommon.get_click_str(event)
   local copy_counts = (click_str == "shift-left")
   if click_str ~= "left" and click_str ~= "shift-left" then
