@@ -11,7 +11,7 @@ local entity_group_filters = {
   ["ammo-turret"] =  { filter = "type", type = "ammo-turret" },
   ["assembling-machine"] =  { filter = "type", type = "assembling-machine" },
   ["lab"] =  { filter = "type", type = "lab" },
-  ["sink-chest"] = { filter = "name", name = "arr-sink-chest" },
+  ["sink-chest"] = { filter = "name", name = "arr-hidden-sink-chest" },
   ["sink-tank"] = { filter = "name", name = "arr-sink-tank" },
   ["logistic-sink-chest"] = { filter = "name", name = "arr-logistic-sink-chest" },
 }

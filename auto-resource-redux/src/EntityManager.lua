@@ -8,7 +8,7 @@ local Util = require "src.Util"
 
 -- TODO: fluid access, logistic chests (call into logistic mananager)
 local entity_queue_specs = {
-  ["sink-chest"] = { handler = EntityHandlers.handle_sink_chest, n_per_tick = 20 },
+  ["sink-chest"] = { handler = EntityHandlers.handle_sink_chest },
   ["sink-tank"] = { handler = EntityHandlers.handle_sink_tank },
   ["logistic-sink-chest"] = { handler = LogisticManager.handle_logistic_sink_chest, n_per_tick = 1 },
   ["car"] = { handler = EntityHandlers.handle_car },
