@@ -7,6 +7,33 @@ local TICKS_PER_LOGISTIC_UPDATE = 90
 local TICKS_PER_ALERT_UPDATE = 60 * 2
 local TICKS_PER_ALERT_TRANSFER = 60 * 10
 
+local function handle_requests(storage, entity, inventory, ammo_inventory, extra_stack)
+  local inventory_items = inventory.get_contents()
+  local ammo_items = ammo_inventory and ammo_inventory.get_contents() or {}
+  local total_inserted = 0
+  extra_stack = extra_stack or {}
+  for i = 1, entity.request_slot_count do
+    local request = entity.get_request_slot(i)
+    if request and request.count > 0 then
+      local item_name = request.name
+      local amount_needed = (
+        request.count
+        - (inventory_items[item_name] or 0)
+        - (ammo_items[item_name] or 0)
+        - (extra_stack[item_name] or 0)
+      )
+      if amount_needed > 0 then
+        if ammo_inventory and ammo_inventory.can_insert(request) then
+          local inserted = Storage.put_in_inventory(storage, ammo_inventory, item_name, amount_needed)
+          amount_needed = amount_needed - inserted
+          total_inserted = total_inserted + inserted
+        end
+        total_inserted = total_inserted + Storage.put_in_inventory(storage, inventory, item_name, amount_needed)
+      end
+    end
+  end
+  return total_inserted > 0
+end
 
 local function handle_player_logistics(player)
   if player.force.character_logistic_requests == false then
@@ -23,36 +50,16 @@ local function handle_player_logistics(player)
     Storage.take_all_from_inventory(storage, trash_inv, true)
   end
 
-  local character = player.character
   local inventory = player.get_inventory(defines.inventory.character_main)
   local ammo_inventory = player.get_inventory(defines.inventory.character_ammo)
-  if not character or not inventory then
+  if not player.character or not inventory then
     return
   end
-  local inventory_items = inventory.get_contents()
-  local ammo_items = ammo_inventory and ammo_inventory.get_contents() or {}
   local cursor_stack = {}
   if player.cursor_stack and player.cursor_stack.count > 0 then
     cursor_stack = { [player.cursor_stack.name] = player.cursor_stack.count }
   end
-  for i = 1, character.request_slot_count do
-    local request = character.get_request_slot(i)
-    if request and request.count > 0 then
-      local item_name = request.name
-      local amount_needed = (
-        request.count
-        - (inventory_items[item_name] or 0)
-        - (ammo_items[item_name] or 0)
-        - (cursor_stack[item_name] or 0)
-      )
-      if amount_needed > 0 then
-        if ammo_inventory and ammo_inventory.can_insert(request) then
-          amount_needed = amount_needed - Storage.put_in_inventory(storage, ammo_inventory, item_name, amount_needed)
-        end
-        Storage.put_in_inventory(storage, inventory, item_name, amount_needed)
-      end
-    end
-  end
+  handle_requests(storage, player.character, inventory, ammo_inventory, cursor_stack)
 end
 
 local function get_entity_key(entity)
@@ -153,14 +160,21 @@ local function handle_player_alerts(player)
   end
 end
 
-function  LogisticManager.handle_logistic_sink_chest(entity)
+function LogisticManager.handle_sink_chest(entity)
   clean_up_deadline_table(global.busy_logistic_chests)
   if global.busy_logistic_chests[entity.unit_number] then
     return false
   end
   local storage = Storage.get_storage(entity)
-  local added_items, _ = Storage.take_all_from_inventory(storage, entity.get_output_inventory(), true)
+  local inventory = entity.get_inventory(defines.inventory.chest)
+  local added_items, _ = Storage.take_all_from_inventory(storage, inventory, true)
   return table_size(added_items) > 0
+end
+
+function LogisticManager.handle_requester_chest(entity)
+  local storage = Storage.get_storage(entity)
+  local inventory = entity.get_inventory(defines.inventory.chest)
+  return handle_requests(storage, entity, inventory)
 end
 
 function LogisticManager.initialise()

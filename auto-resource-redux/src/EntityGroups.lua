@@ -14,6 +14,7 @@ local entity_group_filters = {
   ["sink-chest"] = { filter = "name", name = "arr-hidden-sink-chest" },
   ["sink-tank"] = { filter = "name", name = "arr-sink-tank" },
   ["logistic-sink-chest"] = { filter = "name", name = "arr-logistic-sink-chest" },
+  ["logistic-requester-chest"] = { filter = "name", name = "arr-logistic-requester-chest" },
 }
 
 function EntityGroups.calculate_groups()

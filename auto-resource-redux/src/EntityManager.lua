@@ -10,7 +10,8 @@ local Util = require "src.Util"
 local entity_queue_specs = {
   ["sink-chest"] = { handler = EntityHandlers.handle_sink_chest },
   ["sink-tank"] = { handler = EntityHandlers.handle_sink_tank },
-  ["logistic-sink-chest"] = { handler = LogisticManager.handle_logistic_sink_chest, n_per_tick = 1 },
+  ["logistic-sink-chest"] = { handler = LogisticManager.handle_sink_chest, n_per_tick = 1 },
+  ["logistic-requester-chest"] = { handler = LogisticManager.handle_requester_chest, n_per_tick = 1 },
   ["car"] = { handler = EntityHandlers.handle_car },
   ["ammo-turret"] = { handler = EntityHandlers.handle_turret },
   ["boiler"] = { handler = EntityHandlers.handle_boiler },
@@ -113,7 +114,7 @@ function EntityManager.on_entity_created(event)
   -- place invisible chest to catch outputs for things like mining drills
   if entity.drop_position ~= nil and entity.drop_target == nil then
     local chest = entity.surface.create_entity({
-      name = "arr-sink-chest",
+      name = "arr-hidden-sink-chest",
       position = entity.drop_position,
       force = entity.force,
       player = entity.last_user,

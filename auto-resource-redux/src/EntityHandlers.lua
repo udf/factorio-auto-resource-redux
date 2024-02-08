@@ -272,7 +272,8 @@ end
 
 function EntityHandlers.handle_sink_chest(entity, ignore_limit)
   local storage = Storage.get_storage(entity)
-  local added_items, _ = Storage.take_all_from_inventory(storage, entity.get_output_inventory(), ignore_limit)
+  local inventory = entity.get_inventory(defines.inventory.chest)
+  local added_items, _ = Storage.take_all_from_inventory(storage, inventory, ignore_limit)
   return table_size(added_items) > 0
 end
 
