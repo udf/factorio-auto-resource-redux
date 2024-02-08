@@ -178,31 +178,27 @@ data:extend({
 
 -- sink chest for bots to insert items into storage
 local sink_chest = table.deepcopy(data.raw["logistic-container"]["logistic-chest-storage"])
-sink_chest.collision_mask = {"item-layer", "object-layer", "water-tile"}
+sink_chest.collision_mask = { "item-layer", "object-layer", "water-tile" }
 sink_chest.name = "arr-logistic-sink-chest"
 sink_chest.minable.result = "arr-logistic-sink-chest"
 sink_chest.animation = {
-  layers = {
-    {
-      filename = "__auto-resource-redux__/graphics/sink-chest.png",
-      frame_count = 7,
-      width = 66,
-      height = 32,
-      priority = "extra-high",
-      scale = 0.5,
-      shift = { 0, 0 },
-   },
-    {
-      draw_as_shadow = true,
-      filename = "__auto-resource-redux__/graphics/sink-chest-shadow.png",
-      width = 66,
-      height = 34,
-      priority = "extra-high",
-      repeat_count = 7,
-      scale = 0.5,
-      shift = { 0.078, 0 },
-    }
-  }
+  filename = "__auto-resource-redux__/graphics/hole-chest-glow-anim.png",
+  frame_count = 15,
+  width = 50,
+  height = 64,
+  priority = "extra-high",
+  scale = 0.5,
+  draw_as_glow = true,
+  tint = { 1, 0.74, 0 }
+}
+sink_chest.integration_patch = {
+  direction_count = 1,
+  filename = "__auto-resource-redux__/graphics/sink-chest-integration.png",
+  priority = "low",
+  width = 72,
+  height = 34,
+  scale = 0.5,
+  shift = { 0.07, 0.25 },
 }
 sink_chest.corpse = "arr-logistic-sink-chest-remnants"
 
@@ -216,7 +212,7 @@ sink_chest_remnants.animation = {
   width = 72,
   height = 38,
   scale = 0.5,
-  shift = { 0, -0.03125 },
+  shift = { 0.07, 0.25 },
 }
 
 local sink_chest_recipe = {
