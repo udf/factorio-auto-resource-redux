@@ -9,6 +9,8 @@ local CLOSE_BUTTON_EVENT = "arr-limit-close-btn"
 local CONFIRM_BUTTON_EVENT = "arr-limit-confirm"
 local INPUT_CONFIRMED_EVENT = "arr-limit-input-confirm"
 
+local SLIDER_STEPS = { 0, 1, 2, 3, 4, 5, 10, 15, 20, 25, 50, 75, 100, 150, 200, 250, math.huge }
+
 
 local function highlight_reslist_button(player, storage_key, state)
   local elem = GUICommon.get_or_create_reslist_button(player, storage_key)
@@ -73,6 +75,8 @@ function GUILimitDialog.open(player, storage_key, cursor_location)
   )
 
   local max_limit = fluid_name and Storage.MAX_FLUID_LIMIT or Storage.MAX_ITEM_LIMIT
+  local prototype = (game.item_prototypes[storage_key] or {})
+  local slider_mult = fluid_name and 1000 or (prototype.stack_size or 50)
   GUIComponentSliderInput.create(
     content_flow,
     {
@@ -83,7 +87,11 @@ function GUILimitDialog.open(player, storage_key, cursor_location)
     {
       allow_negative = false,
       tags = { event = { [INPUT_CONFIRMED_EVENT] = true } }
-    }
+    },
+    SLIDER_STEPS,
+    slider_mult,
+    0,
+    max_limit
   )
 
   content_flow.add({

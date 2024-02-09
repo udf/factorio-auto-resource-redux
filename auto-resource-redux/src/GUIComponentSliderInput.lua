@@ -6,38 +6,101 @@ local GUIDispatcher = require "src.GUIDispatcher"
 local SLIDER_EVENT = "arr-component-slider"
 local INPUT_EVENT = "arr-component-slider-input"
 
-function GUIComponentSliderInput.create(parent, slider_attrs, input_attrs)
+local function get_closest_step_index(value, step_values)
+  local min_i = 1
+  local min_dist = math.huge
+  for i, step_val in ipairs(step_values) do
+    local dist = math.abs(value - step_val)
+    if dist <= min_dist then
+      min_dist = dist
+      min_i = i
+    end
+  end
+  return min_i
+end
+
+local function remove_duplicates(array)
+  local seen = {}
+  local out = {}
+  for i, val in ipairs(array) do
+    if not seen[val] then
+      table.insert(out, val)
+      seen[val] = true
+    end
+  end
+  return out
+end
+
+local function scale_array(array, scale, min, max)
+  local out = {}
+  for i, val in ipairs(array) do
+    table.insert(
+      out,
+      Util.clamp(val * scale, min or -math.huge, max or math.huge)
+    )
+  end
+  return out
+end
+
+function GUIComponentSliderInput.create(parent, slider_attrs, input_attrs, slider_steps, slider_mult, min_val, max_val)
+  local value = slider_attrs.value or 0
+  if slider_steps then
+    slider_steps = remove_duplicates(scale_array(slider_steps, slider_mult or 1, min_val, max_val))
+    slider_attrs.minimum_value = 1
+    slider_attrs.maximum_value = #slider_steps
+    slider_attrs.value_step = 1
+    slider_attrs.value = get_closest_step_index(value, slider_steps)
+  end
   local slider = parent.add(flib_table.deep_merge({
     {
       type = "slider",
       name = "slider",
       style = "notched_slider",
-      tags = { event = { [SLIDER_EVENT] = true } }
+      tags = {
+        event = { [SLIDER_EVENT] = true },
+        steps = slider_steps,
+      }
     },
     slider_attrs
   }))
-  parent.add(flib_table.deep_merge({
+  local input = parent.add(flib_table.deep_merge({
     {
       type = "textfield",
       name = "input",
       style = "slider_value_textfield",
-      text = slider.slider_value,
+      text = value,
       numeric = true,
       allow_decimal = false,
-      tags = { event = { [INPUT_EVENT] = true } }
+      tags = {
+        event = { [INPUT_EVENT] = true },
+        min = min_val or slider.get_slider_minimum(),
+        max = max_val or slider.get_slider_maximum()
+      }
     },
     input_attrs
   }))
+  local tags = slider.tags
+  tags.min = input.tags.min
+  tags.max = input.tags.max
+  slider.tags = tags
 end
 
 local function on_slider_changed(event, tags, player)
-  event.element.parent.input.text = tostring(event.element.slider_value)
+  local new_value = event.element.slider_value
+  local input = event.element.parent.input
+  if tags.steps then
+    new_value = Util.clamp(tags.steps[new_value], tags.min, tags.max)
+  end
+  input.text = tostring(new_value)
 end
 
 local function on_text_changed(event, tags, player)
   local slider = event.element.parent.slider
-  local new_value = Util.clamp(tonumber(event.element.text) or 0, slider.get_slider_minimum(), slider.get_slider_maximum())
+  local new_value = Util.clamp(tonumber(event.element.text) or 0, tags.min, tags.max)
   event.element.text = tostring(new_value)
+  if slider.tags.steps then
+    new_value = get_closest_step_index(new_value, slider.tags.steps)
+  end
   slider.slider_value = new_value
 end
 
