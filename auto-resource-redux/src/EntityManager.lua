@@ -6,10 +6,10 @@ local LogisticManager = require "src.LogisticManager"
 local LoopBuffer = require "src.LoopBuffer"
 local Util = require "src.Util"
 
--- TODO: fluid access, logistic chests (call into logistic mananager)
 local entity_queue_specs = {
   ["sink-chest"] = { handler = EntityHandlers.handle_sink_chest },
   ["sink-tank"] = { handler = EntityHandlers.handle_sink_tank },
+  ["arr-requester-tank"] = { handler = EntityHandlers.handle_requester_tank, n_per_tick = 1 },
   ["logistic-sink-chest"] = { handler = LogisticManager.handle_sink_chest, n_per_tick = 1 },
   ["logistic-requester-chest"] = { handler = LogisticManager.handle_requester_chest, n_per_tick = 1 },
   ["car"] = { handler = EntityHandlers.handle_car },

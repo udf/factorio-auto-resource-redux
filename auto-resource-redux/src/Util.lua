@@ -1,7 +1,5 @@
 local Util = {}
 
-Util.UINT_MAX = 4294967295
-
 --- Clamps a value to be in the range [low, high]
 ---@param val number The value to clamp
 ---@param low number The minimum value
@@ -9,6 +7,22 @@ Util.UINT_MAX = 4294967295
 ---@return number n The clamped value
 function Util.clamp(val, low, high)
   return math.min(high, math.max(val, low))
+end
+
+--- Computes the weighted average between a and b
+---@param a number The first value
+---@param a_weight number The weight of the first value
+---@param b number The second value
+---@param b_weight number The weight of the second value
+---@return number n The weighted average
+function Util.weighted_average(a, a_weight, b, b_weight)
+  local total_weight = a_weight + b_weight
+  if total_weight == 0 then
+    total_weight = 1
+  end
+  a_weight = a_weight / total_weight
+  b_weight = b_weight / total_weight
+  return a * a_weight + b * b_weight
 end
 
 --- Adds the new keys from src into dest

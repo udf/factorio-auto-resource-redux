@@ -102,15 +102,14 @@ requester_tank.pictures = {
     priority = "extra-high",
     scale = 0.4,
     width = 48,
-    shift = { 0, 0.1 },
-    draw_as_glow = true
+    shift = { 0, -0.5 },
   },
   flow_sprite = {
     filename = "__base__/graphics/entity/pipe/fluid-flow-low-temperature.png",
     priority = "extra-high",
     width = 160,
     height = 20,
-    draw_as_glow = true
+    shift = { 0, -0.5 },
   }
 }
 

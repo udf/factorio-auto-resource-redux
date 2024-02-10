@@ -1,4 +1,5 @@
 local GUIDispatcher = {}
+local flib_table = require("__flib__/table")
 
 GUIDispatcher.ON_CONFIRM_KEYPRESS = "arr-gui-confirm"
 
@@ -8,18 +9,15 @@ local registered_tagged_events = {
   [defines.events.on_gui_closed] = {},
   [defines.events.on_gui_value_changed] = {},
   [defines.events.on_gui_text_changed] = {},
+  [defines.events.on_gui_elem_changed] = {},
+  [defines.events.on_gui_checked_state_changed] = {},
+
   [GUIDispatcher.ON_CONFIRM_KEYPRESS] = {},
   [defines.events.on_gui_confirmed] = {},
+  [defines.events.on_gui_opened] = {},
 }
 -- { on_click = { fn1, fn2, ... }, ... }
-local registered_events = {
-  [defines.events.on_gui_click] = {},
-  [defines.events.on_gui_closed] = {},
-  [defines.events.on_gui_value_changed] = {},
-  [defines.events.on_gui_text_changed] = {},
-  [GUIDispatcher.ON_CONFIRM_KEYPRESS] = {},
-  [defines.events.on_gui_confirmed] = {},
-}
+local registered_events = flib_table.deep_copy(registered_tagged_events)
 
 function GUIDispatcher.register(event_name, event_tag, handler)
   if event_tag then

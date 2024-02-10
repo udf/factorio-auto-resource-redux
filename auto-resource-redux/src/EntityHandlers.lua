@@ -231,7 +231,7 @@ function EntityHandlers.handle_mining_drill(entity)
     -- there is no easy way to know what fluid a miner wants, the fluid is a property of the ore's prototype
     -- and the expected resources aren't simple to find: https://forums.factorio.com/viewtopic.php?p=247019
     -- so it will have to be done manually using the fluid access tank
-    local _, inserted = store_fluids(storage, entity, "output")
+    local _, inserted = store_fluids(storage, entity, "^output$")
     busy = busy or inserted
   end
   return busy
@@ -286,6 +286,47 @@ function EntityHandlers.handle_sink_tank(entity)
   local new_fluid, amount_added = Storage.add_fluid(storage, fluid)
   if amount_added > 0 then
     entity.fluidbox[1] = new_fluid.amount > 0 and new_fluid or nil
+    return true
+  end
+  return false
+end
+
+function EntityHandlers.handle_requester_tank(entity)
+  local opts = global.requester_tank_opts[entity.unit_number]
+  if not opts then
+    return false
+  end
+  local storage = Storage.get_storage(entity)
+  local fluid = entity.fluidbox[1]
+  if fluid and fluid.name ~= opts.fluid then
+    Storage.add_fluid(storage, fluid, true)
+    fluid = nil
+  end
+  if not opts.fluid then
+    return false
+  end
+  fluid = fluid or {
+    name = opts.fluid,
+    amount = 0,
+    temperature = Util.get_default_fluid_temperature(opts.fluid)
+  }
+  local capacity = entity.fluidbox.get_capacity(1)
+  local target_amount = math.floor(opts.percent / 100 * capacity)
+  local amount_needed = target_amount - fluid.amount
+  if amount_needed <= 0 then
+    return false
+  end
+  local amount_removed, temperature = Storage.remove_fluid_in_temperature_range(
+    storage,
+    Storage.get_fluid_storage_key(fluid.name),
+    opts.min_temp,
+    opts.max_temp or opts.min_temp,
+    amount_needed
+  )
+  fluid.temperature = Util.weighted_average(fluid.temperature, fluid.amount, temperature, amount_removed)
+  fluid.amount = fluid.amount + amount_removed
+  if fluid.amount > 0 then
+    entity.fluidbox[1] = fluid
     return true
   end
   return false

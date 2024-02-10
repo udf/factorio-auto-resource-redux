@@ -240,23 +240,25 @@ end
 function Storage.remove_fluid_in_temperature_range(storage, storage_key, min_temp, max_temp, amount_to_remove)
   local fluid = storage.items[storage_key]
   if not fluid then
-    return 0
+    return 0, 0
   end
   min_temp = math.floor(min_temp or -math.huge)
   max_temp = math.floor(max_temp or math.huge)
   amount_to_remove = math.ceil(amount_to_remove)
   local total_removed = 0
+  local new_temperature = 0
   for temperature, stored_amount in pairs(fluid) do
     if temperature >= min_temp and temperature <= max_temp and stored_amount > 0 then
       local new_amount = math.max(0, stored_amount - amount_to_remove)
       fluid[temperature] = new_amount
       local amount_removed = stored_amount - new_amount
+      new_temperature = Util.weighted_average(new_temperature, total_removed, temperature, amount_removed)
       amount_to_remove = math.max(0, amount_to_remove - amount_removed)
       total_removed = total_removed + amount_removed
     end
   end
   storage.items[storage_key] = fluid
-  return total_removed
+  return total_removed, new_temperature
 end
 
 return Storage

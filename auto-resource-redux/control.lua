@@ -9,6 +9,7 @@ local LogisticManager = require("src.LogisticManager")
 local ItemPriorityManager = require "src.ItemPriorityManager"
 local GUIResourceList = require "src.GUIResourceList"
 local GUIModButton = require "src.GUIModButton"
+local GUIRequesterTank = require "src.GUIRequesterTank"
 local GUIDispatcher = require "src.GUIDispatcher"
 
 
@@ -27,6 +28,7 @@ local function initialise()
   EntityManager.initialise()
   LogisticManager.initialise()
   GUIResourceList.initialise()
+  GUIRequesterTank.initialise()
 end
 
 local function on_tick()
@@ -61,5 +63,8 @@ script.on_event(defines.events.on_gui_click, GUIDispatcher.on_event)
 script.on_event(defines.events.on_gui_closed, GUIDispatcher.on_event)
 script.on_event(defines.events.on_gui_value_changed, GUIDispatcher.on_event)
 script.on_event(defines.events.on_gui_text_changed, GUIDispatcher.on_event)
+script.on_event(defines.events.on_gui_elem_changed, GUIDispatcher.on_event)
+script.on_event(defines.events.on_gui_checked_state_changed, GUIDispatcher.on_event)
 script.on_event(GUIDispatcher.ON_CONFIRM_KEYPRESS, GUIDispatcher.on_event)
 script.on_event(defines.events.on_gui_confirmed, GUIDispatcher.on_event)
+script.on_event(defines.events.on_gui_opened, GUIDispatcher.on_event)
