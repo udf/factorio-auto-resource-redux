@@ -32,6 +32,10 @@ local function manage_entity(entity)
   return queue_key
 end
 
+function EntityManager.can_manage(entity)
+  return EntityGroups.names_to_groups[entity.name] ~= nil
+end
+
 function EntityManager.reload_entities()
   log("Reloading entities")
   global.entity_queues = {}

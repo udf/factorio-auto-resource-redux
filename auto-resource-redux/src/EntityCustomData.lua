@@ -1,4 +1,6 @@
 EntityCustomData = {}
+local GUIDispatcher = require "src.GUIDispatcher"
+local EntityManager = require "src.EntityManager"
 
 -- TODO: settings copy/paste
 local DATA_TAG = "arr-data"
@@ -114,6 +116,25 @@ function EntityCustomData.initialise()
   if global.entity_data == nil then
     global.entity_data = {}
   end
+  if global.entity_clipboard == nil then
+    global.entity_clipboard = {}
+  end
 end
+
+local function on_copy(event, tags, player)
+  global.entity_clipboard[event.player_index] = player.selected
+end
+
+local function on_paste(event, tags, player)
+  local src_entity = global.entity_clipboard[event.player_index]
+  local dest_entity = player.selected
+  if not dest_entity or dest_entity.type ~= src_entity.type or not EntityManager.can_manage(dest_entity) then
+    return
+  end
+  global.entity_data[dest_entity.unit_number] = global.entity_data[src_entity.unit_number]
+end
+
+GUIDispatcher.register(GUIDispatcher.ON_COPY_SETTINGS_KEYPRESS, nil, on_copy)
+GUIDispatcher.register(GUIDispatcher.ON_PASTE_SETTINGS_KEYPRESS, nil, on_paste)
 
 return EntityCustomData
