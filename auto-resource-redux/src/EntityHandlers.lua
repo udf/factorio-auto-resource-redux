@@ -298,8 +298,9 @@ function EntityHandlers.handle_requester_tank(entity)
   end
   local storage = Storage.get_storage(entity)
   local fluid = entity.fluidbox[1]
-  if fluid and fluid.name ~= data.fluid then
+  if fluid and data.fluid and fluid.name ~= data.fluid then
     Storage.add_fluid(storage, fluid, true)
+    entity.fluidbox[1] = nil
     fluid = nil
   end
   if not data.fluid then
