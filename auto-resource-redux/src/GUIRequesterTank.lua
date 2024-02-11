@@ -11,7 +11,7 @@ local MIN_TEMP_CHANGED_EVENT = "arr-requester-tank-temp-min"
 local MAX_TEMP_CHANGED_EVENT = "arr-requester-tank-temp-max"
 
 local function update_controls(unit_number, controls_flow)
-  local opts = global.requester_tank_opts[unit_number]
+  local opts = global.entity_data[unit_number]
   local fluid = opts.fluid
   local percent = opts.percent or 0
   local min_temp = opts.min_temp
@@ -54,7 +54,7 @@ end
 
 local function open_gui(entity, player)
   local unit_number = entity.unit_number
-  global.requester_tank_opts[unit_number] = global.requester_tank_opts[unit_number] or {}
+  global.entity_data[unit_number] = global.entity_data[unit_number] or {}
   local screen = player.gui.screen
 
   local window = screen.add({
@@ -194,12 +194,6 @@ local function open_gui(entity, player)
   update_controls(entity.unit_number, controls_flow)
 end
 
-function GUIRequesterTank.initialise()
-  if global.requester_tank_opts == nil then
-    global.requester_tank_opts = {}
-  end
-end
-
 function on_gui_opened(event, tags, player)
   if event.entity and event.entity.name == "arr-requester-tank" then
     open_gui(event.entity, player)
@@ -214,12 +208,12 @@ end
 local function on_fluid_changed(event, tags, player)
   local fluid = event.element.elem_value
   local fluid_proto = game.fluid_prototypes[fluid]
-  local opts = global.requester_tank_opts[tags.id]
-  global.requester_tank_opts[tags.id] = {
+  local data = global.entity_data[tags.id]
+  global.entity_data[tags.id] = {
     fluid = fluid,
-    percent = opts.percent or 5,
+    percent = data.percent or 5,
     min_temp = fluid_proto.default_temperature,
-    max_temp = opts.max_temp and fluid_proto.default_temperature or nil
+    max_temp = data.max_temp and fluid_proto.default_temperature or nil
   }
   local controls_flow = event.element.parent.parent
   update_controls(tags.id, controls_flow)
@@ -227,36 +221,36 @@ local function on_fluid_changed(event, tags, player)
 end
 
 local function on_percent_changed(event, tags, player)
-  local opts = global.requester_tank_opts[tags.id]
-  opts.percent = event.element.parent.slider.slider_value
+  local data = global.entity_data[tags.id]
+  data.percent = event.element.parent.slider.slider_value
 end
 
 local function on_use_range_checked(event, tags, player)
-  local opts = global.requester_tank_opts[tags.id]
-  opts.max_temp = event.element.state and opts.min_temp or nil
+  local data = global.entity_data[tags.id]
+  data.max_temp = event.element.state and data.min_temp or nil
   local controls_flow = event.element.parent
   update_controls(tags.id, controls_flow)
   player.gui.screen[GUICommon.GUI_REQUESTER_TANK].force_auto_center()
 end
 
 local function on_min_temp_changed(event, tags, player)
-  local opts = global.requester_tank_opts[tags.id]
+  local data = global.entity_data[tags.id]
   local parent = event.element.parent
   local min_temp = parent.slider.slider_value
-  opts.min_temp = min_temp
-  if opts.max_temp and min_temp > opts.max_temp then
-    opts.max_temp = min_temp
+  data.min_temp = min_temp
+  if data.max_temp and min_temp > data.max_temp then
+    data.max_temp = min_temp
     GUIComponentSliderInput.set_value(parent.parent.max, min_temp)
   end
 end
 
 local function on_max_temp_changed(event, tags, player)
-  local opts = global.requester_tank_opts[tags.id]
+  local data = global.entity_data[tags.id]
   local parent = event.element.parent
   local max_temp = parent.slider.slider_value
-  opts.max_temp = max_temp
-  if max_temp < opts.min_temp then
-    opts.min_temp = max_temp
+  data.max_temp = max_temp
+  if max_temp < data.min_temp then
+    data.min_temp = max_temp
     GUIComponentSliderInput.set_value(parent.parent.min, max_temp)
   end
 end

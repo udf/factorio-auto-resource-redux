@@ -292,26 +292,26 @@ function EntityHandlers.handle_sink_tank(entity)
 end
 
 function EntityHandlers.handle_requester_tank(entity)
-  local opts = global.requester_tank_opts[entity.unit_number]
-  if not opts then
+  local data = global.entity_data[entity.unit_number]
+  if not data then
     return false
   end
   local storage = Storage.get_storage(entity)
   local fluid = entity.fluidbox[1]
-  if fluid and fluid.name ~= opts.fluid then
+  if fluid and fluid.name ~= data.fluid then
     Storage.add_fluid(storage, fluid, true)
     fluid = nil
   end
-  if not opts.fluid then
+  if not data.fluid then
     return false
   end
   fluid = fluid or {
-    name = opts.fluid,
+    name = data.fluid,
     amount = 0,
-    temperature = Util.get_default_fluid_temperature(opts.fluid)
+    temperature = Util.get_default_fluid_temperature(data.fluid)
   }
   local capacity = entity.fluidbox.get_capacity(1)
-  local target_amount = math.floor(opts.percent / 100 * capacity)
+  local target_amount = math.floor(data.percent / 100 * capacity)
   local amount_needed = target_amount - fluid.amount
   if amount_needed <= 0 then
     return false
@@ -319,8 +319,8 @@ function EntityHandlers.handle_requester_tank(entity)
   local amount_removed, temperature = Storage.remove_fluid_in_temperature_range(
     storage,
     Storage.get_fluid_storage_key(fluid.name),
-    opts.min_temp,
-    opts.max_temp or opts.min_temp,
+    data.min_temp,
+    data.max_temp or data.min_temp,
     amount_needed
   )
   fluid.temperature = Util.weighted_average(fluid.temperature, fluid.amount, temperature, amount_removed)
