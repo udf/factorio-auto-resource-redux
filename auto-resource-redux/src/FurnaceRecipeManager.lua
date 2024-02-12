@@ -1,17 +1,7 @@
 local FurnaceRecipeManager = {}
 
 function FurnaceRecipeManager.get_recipe_label(recipe)
-  local proto = recipe.prototype
-  local main_product = proto.main_product
-  local label = {}
-  if main_product then
-    local fmt = (main_product.type == "item") and "[item=%s] %s" or "[fluid=%s] %s"
-    table.insert(label, fmt:format(main_product.name, recipe.name))
-  else
-    table.insert(label, recipe.name)
-  end
-  table.insert(label, ("(%s)"):format(recipe.category))
-  return table.concat(label, " ")
+  return ("[recipe=%s] %s (%s)"):format(recipe.name, recipe.name, recipe.category)
 end
 
 local function clear_pending_recipe(entity)
@@ -75,19 +65,15 @@ function FurnaceRecipeManager.set_recipe(entity, recipe)
     surface = entity.surface,
     only_in_alt_mode = true,
   })
-  local main_product = recipe.prototype.main_product
-  local recipe_icon = nil
-  if main_product then
-    recipe_icon = rendering.draw_sprite({
-      sprite = (main_product.type == "item" and "item/" or "fluid/") .. main_product.name,
-      render_layer = "selection-box",
-      target = entity,
-      target_offset = offset,
-      forces = { entity.force },
-      surface = entity.surface,
-      only_in_alt_mode = true,
-    })
-  end
+  local recipe_icon = rendering.draw_sprite({
+    sprite = "recipe/" .. recipe.name,
+    render_layer = "selection-box",
+    target = entity,
+    target_offset = offset,
+    forces = { entity.force },
+    surface = entity.surface,
+    only_in_alt_mode = true,
+  })
 
   global.furnace_recipes[entity.unit_number] = {
     recipe = recipe,
