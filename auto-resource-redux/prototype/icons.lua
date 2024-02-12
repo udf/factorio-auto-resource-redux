@@ -33,10 +33,12 @@ local changing_icon = {
   name = "arr-changing-icon",
   filename = "__auto-resource-redux__/graphics/icon-changing.png",
   priority = "medium",
-  width = 70,
-  height = 70,
+  width = 72,
+  height = 72,
   generate_sdf = true,
-  scale = 0.5
+  scale = 0.5,
+  mipmap_count = 3,
+  flags = { "icon" },
 }
 
 data:extend({
