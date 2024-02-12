@@ -82,5 +82,7 @@ script.on_event(defines.events.on_gui_opened, GUIDispatcher.on_event)
 
 -- blueprint/settings
 script.on_event(defines.events.on_player_setup_blueprint, EntityCustomData.on_setup_blueprint)
+script.on_event(defines.events.on_entity_settings_pasted, EntityCustomData.on_settings_pasted)
 script.on_event(GUIDispatcher.ON_COPY_SETTINGS_KEYPRESS, GUIDispatcher.on_event)
-script.on_event(GUIDispatcher.ON_PASTE_SETTINGS_KEYPRESS, GUIDispatcher.on_event)
+script.on_event(defines.events.on_player_selected_area, EntityCustomData.on_player_selected_area)
+

@@ -10,6 +10,20 @@ local USE_RANGE_EVENT = "arr-requester-tank-temp-range"
 local MIN_TEMP_CHANGED_EVENT = "arr-requester-tank-temp-min"
 local MAX_TEMP_CHANGED_EVENT = "arr-requester-tank-temp-max"
 
+function GUIRequesterTank.get_paste_label(data)
+  if not data then
+    return ""
+  end
+  if data.fluid and data.min_temp and data.max_temp then
+    return ("[fluid=%s] %d%% @ %d°C-%d°C"):format(data.fluid, data.percent or 0, data.min_temp, data.max_temp)
+  elseif data.fluid and data.min_temp then
+    return ("[fluid=%s] %d%% @ %d°C"):format(data.fluid, data.percent or 0, data.min_temp)
+  elseif data.fluid then
+    return ("[fluid=%s]"):format(data.fluid)
+  end
+  return ""
+end
+
 local function update_controls(unit_number, controls_flow)
   local opts = global.entity_data[unit_number]
   local fluid = opts.fluid

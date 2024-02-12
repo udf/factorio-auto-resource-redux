@@ -1,6 +1,7 @@
 EntityCustomData = {}
+local flib_table = require("__flib__/table")
 local GUIDispatcher = require "src.GUIDispatcher"
-local EntityManager = require "src.EntityManager"
+local GUIRequesterTank = require "src.GUIRequesterTank"
 
 -- TODO: settings copy/paste
 local DATA_TAG = "arr-data"
@@ -30,7 +31,7 @@ function EntityCustomData.on_setup_blueprint(event)
       local entity_data = global.entity_data[entity.unit_number]
       local blueprint_entity = blueprint_entities[id]
       if entity_data and blueprint_entity then
-        entity_data.entity_name = entity.name
+        entity_data._name = entity.name
         table.insert(
           blueprint_entities_arr,
           {
@@ -54,13 +55,13 @@ end
 function EntityCustomData.on_built(event)
   local entity = event.created_entity or event.entity
   if entity.type == "entity-ghost" and entity.ghost_name == "arr-data-proxy" then
-    local target_name = entity.tags.entity_name
+    local target_name = entity.tags._name
     local search_area = {
       { entity.position.x - 0.1, entity.position.y - 0.1 },
       { entity.position.x + 0.1, entity.position.y + 0.1 }
     }
     local new_tags = entity.tags
-    new_tags.entity_name = nil
+    new_tags._name = nil
 
     -- look for entity to assign tags to
     local found_entities = entity.surface.find_entities_filtered({
@@ -109,32 +110,59 @@ end
 function EntityCustomData.on_cloned(event)
   local dest_id = event.destination.unit_number
   local src_id = event.source.unit_number
-  global.entity_data[dest_id] = global.entity_data[src_id]
+  global.entity_data[dest_id] = flib_table.deep_copy(global.entity_data[src_id])
 end
 
 function EntityCustomData.initialise()
   if global.entity_data == nil then
     global.entity_data = {}
   end
-  if global.entity_clipboard == nil then
-    global.entity_clipboard = {}
+  if global.entity_data_clipboard == nil then
+    global.entity_data_clipboard = {}
   end
+end
+
+function EntityCustomData.on_settings_pasted(event)
+  EntityCustomData.on_cloned(event)
 end
 
 local function on_copy(event, tags, player)
-  global.entity_clipboard[event.player_index] = player.selected
-end
-
-local function on_paste(event, tags, player)
-  local src_entity = global.entity_clipboard[event.player_index]
-  local dest_entity = player.selected
-  if not dest_entity or dest_entity.type ~= src_entity.type or not EntityManager.can_manage(dest_entity) then
+  local selected = player.selected
+  local cursor = player.cursor_stack
+  if not selected or cursor.valid_for_read then
     return
   end
-  global.entity_data[dest_entity.unit_number] = global.entity_data[src_entity.unit_number]
+
+  local tool_name = nil
+  if selected.name == "arr-requester-tank" then
+    tool_name = "arr-paste-tool-requester-tank"
+  end
+
+  if tool_name then
+    local selected_data = global.entity_data[player.selected.unit_number]
+    if cursor.set_stack({ name = tool_name, count = 1 }) then
+      cursor.label = GUIRequesterTank.get_paste_label(selected_data)
+      player.cursor_stack_temporary = true
+    end
+    global.entity_data_clipboard[event.player_index] = {
+      name = selected.name,
+      type = selected.type,
+      data = flib_table.deep_copy(selected_data)
+    }
+  end
+end
+
+function EntityCustomData.on_player_selected_area(event)
+  if event.item == "arr-paste-tool-requester-tank" then
+    local src = global.entity_data_clipboard[event.player_index]
+    for _, entity in ipairs(event.entities) do
+      if entity.name == src.name then
+        global.entity_data[entity.unit_number] = src.data
+      end
+    end
+  end
 end
 
 GUIDispatcher.register(GUIDispatcher.ON_COPY_SETTINGS_KEYPRESS, nil, on_copy)
-GUIDispatcher.register(GUIDispatcher.ON_PASTE_SETTINGS_KEYPRESS, nil, on_paste)
 
 return EntityCustomData
