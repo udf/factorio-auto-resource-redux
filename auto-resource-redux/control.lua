@@ -1,18 +1,18 @@
 if script.active_mods["gvv"] then require("__gvv__.gvv")() end
 
-local Util = require("src.Util")
 local DomainStore = require "src.DomainStore";
-local EntityGroups = require "src.EntityGroups";
-local Storage = require "src.Storage"
 local EntityCustomData = require "src.EntityCustomData"
+local EntityGroups = require "src.EntityGroups";
 local EntityManager = require "src.EntityManager"
-local LogisticManager = require("src.LogisticManager")
-local ItemPriorityManager = require "src.ItemPriorityManager"
-local GUIResourceList = require "src.GUIResourceList"
+local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
+local GUIDispatcher = require "src.GUIDispatcher"
 local GUIModButton = require "src.GUIModButton"
 local GUIRequesterTank = require "src.GUIRequesterTank"
-local GUIDispatcher = require "src.GUIDispatcher"
-
+local GUIResourceList = require "src.GUIResourceList"
+local ItemPriorityManager = require "src.ItemPriorityManager"
+local LogisticManager = require("src.LogisticManager")
+local Storage = require "src.Storage"
+local Util = require("src.Util")
 
 local initialised = false
 
@@ -27,6 +27,7 @@ local function initialise()
   ItemPriorityManager.initialise()
   Storage.initialise()
   EntityCustomData.initialise()
+  FurnaceRecipeManager.initialise()
   EntityManager.initialise()
   LogisticManager.initialise()
   GUIResourceList.initialise()

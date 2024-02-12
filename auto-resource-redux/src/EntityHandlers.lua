@@ -4,6 +4,7 @@ local EntityHandlers = {}
 local TARGET_INGREDIENT_CRAFT_TIME = 2
 
 local ItemPriorityManager = require "src.ItemPriorityManager"
+local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
 local Storage = require "src.Storage"
 local Util = require "src.Util"
 
@@ -117,8 +118,8 @@ local function insert_fuel(storage, entity)
   return false
 end
 
-function EntityHandlers.handle_assembler(entity, secondary_recipe)
-  local recipe = entity.get_recipe() or secondary_recipe
+function EntityHandlers.handle_assembler(entity, override_recipe, clear_inputs)
+  local recipe = override_recipe or entity.get_recipe()
   if recipe == nil then
     return false
   end
@@ -156,6 +157,10 @@ function EntityHandlers.handle_assembler(entity, secondary_recipe)
   local crafts_per_second = entity.crafting_speed / recipe.energy
   local ingredient_multiplier = math.max(1, math.ceil(TARGET_INGREDIENT_CRAFT_TIME * crafts_per_second))
   local input_inventory = entity.get_inventory(defines.inventory.assembling_machine_input)
+  if clear_inputs then
+    Storage.take_all_from_inventory(storage, input_inventory, true)
+    store_fluids(storage, entity, nil, true)
+  end
   local input_items = input_inventory.get_contents()
   for i, fluid, filter, proto in Util.iter_fluidboxes(entity, "^", false) do
     if proto.production_type ~= "output" then
@@ -202,12 +207,12 @@ function EntityHandlers.handle_assembler(entity, secondary_recipe)
 end
 
 function EntityHandlers.handle_furnace(entity)
-  local recipe = entity.get_recipe() or entity.previous_recipe
+  local recipe, switched = FurnaceRecipeManager.get_recipe(entity)
   local busy = false
   if recipe then
     local storage = Storage.get_storage(entity)
     busy = busy or insert_fuel(storage, entity)
-    busy = busy or EntityHandlers.handle_assembler(entity, recipe)
+    busy = busy or EntityHandlers.handle_assembler(entity, recipe, switched)
   end
   return busy
 end

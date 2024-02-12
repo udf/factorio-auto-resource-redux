@@ -1,7 +1,9 @@
 EntityCustomData = {}
 local flib_table = require("__flib__/table")
+local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
 local GUIDispatcher = require "src.GUIDispatcher"
 local GUIRequesterTank = require "src.GUIRequesterTank"
+local Util = require "src.Util"
 
 -- TODO: settings copy/paste
 local DATA_TAG = "arr-data"
@@ -126,6 +128,17 @@ function EntityCustomData.on_settings_pasted(event)
   EntityCustomData.on_cloned(event)
 end
 
+local function get_paste_tool(entity)
+  if entity.name == "arr-requester-tank" then
+    return "arr-paste-tool-requester-tank", GUIRequesterTank.get_paste_label
+  elseif entity.type == "furnace" then
+    local recipe = entity.get_recipe() or entity.previous_recipe
+    if recipe then
+      return "arr-paste-tool-furnace-" .. recipe.category, FurnaceRecipeManager.get_recipe_label, recipe
+    end
+  end
+end
+
 local function on_copy(event, tags, player)
   local selected = player.selected
   local cursor = player.cursor_stack
@@ -133,32 +146,37 @@ local function on_copy(event, tags, player)
     return
   end
 
-  local tool_name = nil
-  if selected.name == "arr-requester-tank" then
-    tool_name = "arr-paste-tool-requester-tank"
-  end
+  local tool_name, label_fn, extra_data = get_paste_tool(selected)
 
   if tool_name then
     local selected_data = global.entity_data[player.selected.unit_number]
     if cursor.set_stack({ name = tool_name, count = 1 }) then
-      cursor.label = GUIRequesterTank.get_paste_label(selected_data)
+      cursor.label = label_fn(extra_data or selected_data, selected_data)
       player.cursor_stack_temporary = true
     end
     global.entity_data_clipboard[event.player_index] = {
       name = selected.name,
       type = selected.type,
-      data = flib_table.deep_copy(selected_data)
+      extra_data = extra_data,
+      data = flib_table.deep_copy(selected_data),
     }
   end
 end
 
 function EntityCustomData.on_player_selected_area(event)
+  local src = global.entity_data_clipboard[event.player_index]
   if event.item == "arr-paste-tool-requester-tank" then
-    local src = global.entity_data_clipboard[event.player_index]
     for _, entity in ipairs(event.entities) do
       if entity.name == src.name then
-        global.entity_data[entity.unit_number] = src.data
+        global.entity_data[entity.unit_number] = flib_table.deep_copy(src.data)
       end
+    end
+  end
+
+  local furnace_tool_category = event.item:match("arr%-paste%-tool%-furnace%-(.+)")
+  if furnace_tool_category then
+    for _, entity in ipairs(event.entities) do
+      FurnaceRecipeManager.set_recipe(entity, src.extra_data)
     end
   end
 end
