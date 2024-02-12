@@ -3,10 +3,17 @@ local flib_table = require("__flib__/table")
 local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
 local GUIDispatcher = require "src.GUIDispatcher"
 local GUIRequesterTank = require "src.GUIRequesterTank"
-local Util = require "src.Util"
 
--- TODO: settings copy/paste
 local DATA_TAG = "arr-data"
+
+function EntityCustomData.initialise()
+  if global.entity_data == nil then
+    global.entity_data = {}
+  end
+  if global.entity_data_clipboard == nil then
+    global.entity_data_clipboard = {}
+  end
+end
 
 function EntityCustomData.on_setup_blueprint(event)
   local player = game.players[event.player_index]
@@ -113,15 +120,6 @@ function EntityCustomData.on_cloned(event)
   local dest_id = event.destination.unit_number
   local src_id = event.source.unit_number
   global.entity_data[dest_id] = flib_table.deep_copy(global.entity_data[src_id])
-end
-
-function EntityCustomData.initialise()
-  if global.entity_data == nil then
-    global.entity_data = {}
-  end
-  if global.entity_data_clipboard == nil then
-    global.entity_data_clipboard = {}
-  end
 end
 
 function EntityCustomData.on_settings_pasted(event)
