@@ -8,6 +8,7 @@ local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
 local GUIDispatcher = require "src.GUIDispatcher"
 local GUIModButton = require "src.GUIModButton"
 local GUIRequesterTank = require "src.GUIRequesterTank"
+local GUIEntityPanel = require "src.GUIEntityPanel"
 local GUIResourceList = require "src.GUIResourceList"
 local ItemPriorityManager = require "src.ItemPriorityManager"
 local LogisticManager = require("src.LogisticManager")
@@ -31,6 +32,7 @@ local function initialise()
   EntityManager.initialise()
   LogisticManager.initialise()
   GUIResourceList.initialise()
+  GUIEntityPanel.initialise()
 end
 
 local function on_tick()
@@ -43,6 +45,7 @@ local function on_tick()
   LogisticManager.on_tick()
   GUIModButton.on_tick()
   GUIResourceList.on_tick()
+  GUIEntityPanel.on_tick()
 end
 
 local function on_built(event)
@@ -80,6 +83,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, GUIDispatcher.on_ev
 script.on_event(GUIDispatcher.ON_CONFIRM_KEYPRESS, GUIDispatcher.on_event)
 script.on_event(defines.events.on_gui_confirmed, GUIDispatcher.on_event)
 script.on_event(defines.events.on_gui_opened, GUIDispatcher.on_event)
+script.on_event(defines.events.on_gui_location_changed, GUIEntityPanel.on_location_changed)
 
 -- blueprint/settings
 script.on_event(defines.events.on_player_setup_blueprint, EntityCustomData.on_setup_blueprint)

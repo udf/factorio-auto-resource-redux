@@ -216,6 +216,7 @@ end
 
 local function on_close(event, tags, player)
   local window = player.gui.screen[GUICommon.GUI_REQUESTER_TANK]
+  player.opened = nil
   window.destroy()
 end
 

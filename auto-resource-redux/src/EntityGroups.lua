@@ -3,6 +3,7 @@ local EntityGroups = {}
 -- mapping of entity names to our "group" for them
 EntityGroups.names_to_groups = {}
 
+-- TODO: rocket silo, reactor
 local entity_group_filters = {
   ["car"] =  { filter = "type", type = "car" },
   ["boiler"] =  { filter = "type", type = "boiler" },

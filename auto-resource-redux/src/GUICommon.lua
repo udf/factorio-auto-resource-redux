@@ -8,6 +8,7 @@ GUICommon.GUI_RESOURCE_TABLE = "arr-res-tables"
 GUICommon.GUI_LIMIT_DIALOG = "arr-limit-diag"
 GUICommon.GUI_ITEM_PRIORITY = "arr-priority-list"
 GUICommon.GUI_REQUESTER_TANK = "arr-requester-tank"
+GUICommon.GUI_ENTITY_PANEL = "arr-entity-panel"
 
 
 local mouse_button_str = {
