@@ -6,7 +6,7 @@ local DomainStore = require "src.DomainStore";
 local EntityGroups = require "src.EntityGroups"
 
 local DEFAULT_VEHICLE_AMMO_AMOUNT = 10
-local FUEL_BURN_SECONDS_TARGET = 90
+local FUEL_BURN_SECONDS_TARGET = 60
 
 local default_priority_sets = {}
 
