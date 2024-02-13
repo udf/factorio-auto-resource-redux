@@ -18,6 +18,15 @@ local EntityTypeGUIAnchors = {
   ["spider-vehicle"] = defines.relative_gui_type.spider_vehicle_gui
 }
 
+local function get_location_key(player, entity_name)
+  return ("%d;%s;%s;%s"):format(
+    player.index,
+    player.opened.get_mod(),
+    entity_name,
+    player.opened.name
+  )
+end
+
 local function add_gui_content(window, entity)
   local frame = window.add({
     type = "frame",
@@ -30,6 +39,7 @@ local function add_gui_content(window, entity)
 end
 
 local function close_gui(player)
+  local last_position = nil
   local window = player.gui.relative[GUICommon.GUI_ENTITY_PANEL]
   if window then
     window.destroy()
@@ -37,14 +47,14 @@ local function close_gui(player)
 
   window = player.gui.screen[GUICommon.GUI_ENTITY_PANEL]
   if window then
+    last_position = window.location
     window.destroy()
   end
+  return last_position
 end
 
 local function on_gui_opened(event, tags, player)
-  close_gui(player)
-
-  -- TODO: might need to open on screen if custom GUI has replaced one of the in game ones
+  local last_position = close_gui(player)
   local entity = event.entity
   if not entity or not EntityManager.can_manage(entity) then
     return
@@ -53,24 +63,29 @@ local function on_gui_opened(event, tags, player)
   -- if .opened is a custom UI, then open on screen instead because we can't anchor
   if player.opened and player.opened.object_name == "LuaGuiElement" then
     local parent = player.gui.screen
-    local location_key = ("%d;%s;%s;%s"):format(player.index, player.opened.get_mod(), entity.name, player.opened.name)
     local window = parent.add({
       type = "frame",
       name = GUICommon.GUI_ENTITY_PANEL,
       direction = "vertical",
       style = "inner_frame_in_outer_frame",
-      tags = { location_key = location_key }
+      tags = { entity_name = entity.name }
     })
     GUICommon.create_header(window, "Auto Resource", GUI_CLOSE_EVENT)
-    if global.entity_panel_location[location_key] then
-      window.location = global.entity_panel_location[location_key]
+    -- use the location from the previous time a similar UI was opened
+    -- this might be incorrect, but should be corrected on the next tick
+    local location_key = get_location_key(player, entity.name)
+    last_position = global.entity_panel_location[location_key] or last_position
+    if last_position then
+      window.location = last_position
     else
       window.force_auto_center()
-      global.entity_panel_pending_relocations[player.index] = {
-        player = player,
-        tick = game.tick + 1
-      }
     end
+    -- the position of the parent GUI will only be known on the next tick
+    -- so set a flag for on_tick to reposition us later
+    global.entity_panel_pending_relocations[player.index] = {
+      player = player,
+      tick = game.tick + 1
+    }
     add_gui_content(window, entity)
     return
   end
@@ -110,12 +125,25 @@ function GUIEntityPanel.on_tick()
     end
     if t.player.opened then
       local window = t.player.gui.screen[GUICommon.GUI_ENTITY_PANEL]
-      local location = t.player.opened.location
-      local res = t.player.display_resolution
-      local guessed_width = (res.width / 2 - location.x) * 2
-      if guessed_width > 0 then
-        window.location = { location.x + guessed_width, location.y }
-        global.entity_panel_location[window.tags.location_key] = window.location
+      local parent_location = t.player.opened.location
+      local tags = window.tags
+      -- remember the location, so we can use it for the initial frame when a similar UI opens
+      -- we don't account for the parent size, so it might positioned incorrectly
+      -- but it is less distracting than being in the center
+      local basic_location_key = get_location_key(t.player, tags.entity_name)
+      tags.location_key = ("%s;%d;%d"):format(basic_location_key, parent_location.x, parent_location.y)
+      window.tags = tags
+      local previous_location = global.entity_panel_location[tags.location_key]
+      if previous_location then
+        window.location = previous_location
+        global.entity_panel_location[basic_location_key] = previous_location
+      else
+        local res = t.player.display_resolution
+        local guessed_width = (res.width / 2 - parent_location.x) * 2
+        if guessed_width > 0 then
+          window.location = { parent_location.x + guessed_width, parent_location.y }
+          global.entity_panel_location[basic_location_key] = window.location
+        end
       end
     end
     global.entity_panel_pending_relocations[player_id] = nil
@@ -125,7 +153,10 @@ end
 
 function GUIEntityPanel.on_location_changed(event)
   if event.element.name == GUICommon.GUI_ENTITY_PANEL then
-    global.entity_panel_location[event.element.tags.location_key] = event.element.location
+    local location_key = event.element.tags.location_key
+    if location_key then
+      global.entity_panel_location[location_key] = event.element.location
+    end
   end
 end
 
