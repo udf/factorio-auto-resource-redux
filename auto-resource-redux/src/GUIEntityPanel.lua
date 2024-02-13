@@ -14,6 +14,7 @@ local EntityTypeGUIAnchors = {
   ["boiler"] = defines.relative_gui_type.entity_with_energy_source_gui,
   ["ammo-turret"] = defines.relative_gui_type.container_gui,
   ["reactor"] = defines.relative_gui_type.reactor_gui,
+  ["storage-tank"] = defines.relative_gui_type.storage_tank_gui,
   ["rocket-silo"] = defines.relative_gui_type.rocket_silo_gui,
   ["spider-vehicle"] = defines.relative_gui_type.spider_vehicle_gui
 }
