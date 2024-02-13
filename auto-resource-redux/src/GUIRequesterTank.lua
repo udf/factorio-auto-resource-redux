@@ -208,7 +208,7 @@ local function open_gui(entity, player)
   update_controls(entity.unit_number, controls_flow)
 end
 
-function on_gui_opened(event, tags, player)
+local function on_gui_opened(event, tags, player)
   if event.entity and event.entity.name == "arr-requester-tank" then
     open_gui(event.entity, player)
   end
