@@ -4,7 +4,7 @@ local EntityGroups = {}
 EntityGroups.names_to_groups = {}
 
 -- TODO: rocket silo, reactor
-local entity_group_filters = {
+EntityGroups.entity_group_filters = {
   ["car"] =  { filter = "type", type = "car" },
   ["boiler"] =  { filter = "type", type = "boiler" },
   ["furnace"] =  { filter = "type", type = "furnace" },
@@ -21,7 +21,7 @@ local entity_group_filters = {
 
 function EntityGroups.calculate_groups()
   EntityGroups.names_to_groups = {}
-  for group_name, prototype_filter in pairs(entity_group_filters) do
+  for group_name, prototype_filter in pairs(EntityGroups.entity_group_filters) do
     local entity_prototypes = game.get_filtered_entity_prototypes({ prototype_filter })
     for name, prototype in pairs(entity_prototypes) do
       EntityGroups.names_to_groups[name] = group_name

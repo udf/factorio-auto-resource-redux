@@ -9,6 +9,7 @@ local DEFAULT_VEHICLE_AMMO_AMOUNT = 10
 local FUEL_BURN_SECONDS_TARGET = 60
 
 local default_priority_sets = {}
+ItemPriorityManager.item_names = {}
 
 local function get_new_priority_sets(domain_key)
   local priorities = flib_table.deep_copy(default_priority_sets)
@@ -113,6 +114,7 @@ local function create_default_priority_sets()
   for set_key, set in pairs(default_priority_sets) do
     for item_name, _ in pairs(set.item_counts) do
       table.insert(default_priority_sets[set_key].item_order, item_name)
+      ItemPriorityManager.item_names[item_name] = true
     end
   end
   default_priority_sets.domain_key = ""

@@ -81,7 +81,8 @@ local function update_gui(player)
 
     local quantity = min or count
     local item_limit = Storage.get_item_limit(storage, storage_key) or 0
-    local is_red = quantity / item_limit < 0.01
+    local reserved = Storage.get_item_reservation(storage, storage_key)
+    local is_red = quantity / item_limit < 0.01 or quantity <= reserved
     local tooltip = {
       "", R.FONT_BOLD, R.COLOUR_LABEL,
       fluid_name and { "fluid-name." .. fluid_name } or game.item_prototypes[storage_key].localised_name,
@@ -89,7 +90,8 @@ local function update_gui(player)
       "\n",
       (is_red and R.COLOUR_RED or ""), (min or count), (is_red and R.COLOUR_END or ""),
       "/", item_limit,
-      R.FONT_END
+      R.FONT_END,
+      reserved > 0 and ("\n[color=#e6d0ae][font=default-bold]Reserved:[/font][/color] " .. reserved) or ""
     }
     -- List the levels of each fluid temperature
     if fluid_name then
@@ -112,7 +114,7 @@ local function update_gui(player)
         table.insert(
           qty_strs,
           string.format(
-            "%s[color=#e6d0ae][font=default-bold]%d°C[/font][/color]: %s%d%s",
+            "%s[color=#e6d0ae][font=default-bold]%d°C:[/font][/color] %s%d%s",
             i % wrap == 0 and "\n" or ", ",
             temperature,
             colour_tag and colour_tag or "",
@@ -228,7 +230,11 @@ local function on_button_clicked(event, tags, player)
   })[click_str] or 1
   amount_to_give = Util.clamp(amount_to_give, 0, stored_count)
   if amount_to_give > 0 then
-    Storage.put_in_inventory(storage, player.get_inventory(defines.inventory.character_main), storage_key, amount_to_give)
+    Storage.put_in_inventory(
+      storage, storage_key,
+      player.get_inventory(defines.inventory.character_main), amount_to_give,
+      true
+    )
     update_gui(player)
   end
 end

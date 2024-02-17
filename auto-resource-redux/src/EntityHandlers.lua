@@ -30,7 +30,14 @@ function EntityHandlers.store_all_fluids(entity)
   return store_fluids(Storage.get_storage(entity), entity, "^", true)
 end
 
-local function insert_fluids(storage, entity, target_amounts, default_amount)
+--- Inserts fluids into the given entity
+---@param storage table
+---@param entity LuaEntity
+---@param target_amounts table
+---@param default_amount integer
+---@param use_reserved boolean
+---@return boolean inserted True if some fluids were inserted
+local function insert_fluids(storage, entity, target_amounts, default_amount, use_reserved)
   default_amount = default_amount or 0
   local inserted = false
   for i, fluid, filter, proto in Util.iter_fluidboxes(entity, "^", true) do
@@ -48,7 +55,8 @@ local function insert_fluids(storage, entity, target_amounts, default_amount)
       Storage.get_fluid_storage_key(filter.name),
       filter.minimum_temperature,
       filter.maximum_temperature,
-      amount_needed
+      amount_needed,
+      use_reserved
     )
     inserted = true
     -- We could compute the new temperature but recipes don't take the specific temperature into account
@@ -59,7 +67,20 @@ local function insert_fluids(storage, entity, target_amounts, default_amount)
   return inserted
 end
 
-local function insert_using_priority_set(storage, entity, priority_set_key, stack, filter_name)
+--- Inserts items into a stack based on the provided priority set
+---@param storage table
+---@param entity LuaEntity
+---@param priority_set_key string
+---@param stack LuaItemStack
+---@param filter_name string|nil The name of the filtered item, if applicable
+---@param use_reserved boolean
+---@param default_use_reserved boolean If true, the entity will automatically be prioritised if use_reserved is nil
+---@return boolean inserted
+local function insert_using_priority_set(
+  storage, entity, priority_set_key,
+  stack, filter_name,
+  use_reserved, default_use_reserved
+)
   local priority_sets = ItemPriorityManager.get_priority_sets(entity)
   if not priority_sets[priority_set_key] then
     log(("FIXME: missing priority set \"%s\" for %s!"):format(priority_set_key, entity.name))
@@ -79,6 +100,11 @@ local function insert_using_priority_set(storage, entity, priority_set_key, stac
   -- set satisfaction to 0 if the item is unknown so that it immediately gets "upgraded" to a better item
   local current_satisfaction = (expected_count > 0) and math.min(1, current_count / expected_count) or 0
 
+  if use_reserved == nil then
+    use_reserved = (default_use_reserved == true)
+    EntityCustomData.set_use_reserved(entity, use_reserved)
+  end
+
   -- insert first usable item
   for item_name, wanted_amount in pairs(usable_items) do
     local stored_amount = storage.items[item_name] or 0
@@ -92,7 +118,11 @@ local function insert_using_priority_set(storage, entity, priority_set_key, stac
       local new_satisfaction = math.min(1, stored_amount / wanted_amount)
 
       if new_satisfaction >= current_satisfaction then
-        local amount_added = Storage.add_to_or_replace_stack(storage, stack, item_name, wanted_amount, true)
+        local amount_added = Storage.add_to_or_replace_stack(
+          storage, item_name,
+          stack, wanted_amount,
+          true, use_reserved
+        )
         return amount_added > 0
       end
     end
@@ -105,20 +135,25 @@ local function insert_using_priority_set(storage, entity, priority_set_key, stac
   return false
 end
 
-local function insert_fuel(storage, entity)
+--- Inserts fuel into the first slot of an entity's fuel inventory using its priority set
+---@param storage table
+---@param entity LuaEntity
+---@param use_reserved boolean
+---@param default_use_reserved boolean
+---@return boolean inserted
+local function insert_fuel(storage, entity, use_reserved, default_use_reserved)
   local inventory = entity.get_fuel_inventory()
   if inventory then
     return insert_using_priority_set(
-      storage,
-      entity,
-      ItemPriorityManager.get_fuel_key(entity.name),
-      inventory[1]
+      storage, entity, ItemPriorityManager.get_fuel_key(entity.name),
+      inventory[1], nil,
+      use_reserved, default_use_reserved
     )
   end
   return false
 end
 
-function EntityHandlers.handle_assembler(entity, override_recipe, clear_inputs)
+function EntityHandlers.handle_assembler(entity, use_reserved, override_recipe, clear_inputs)
   local recipe = override_recipe or entity.get_recipe()
   if recipe == nil then
     return false
@@ -127,7 +162,7 @@ function EntityHandlers.handle_assembler(entity, override_recipe, clear_inputs)
   -- always try to pick up outputs
   local storage = Storage.get_storage(entity)
   local output_inventory = entity.get_inventory(defines.inventory.assembling_machine_output)
-  local _, remaining_items = Storage.take_all_from_inventory(storage, output_inventory)
+  local _, remaining_items = Storage.add_from_inventory(storage, output_inventory, false)
   -- TODO: we're storing all fluids here, so a recipe that has the same input and output fluid
   -- might get stuck as the output will be stored first
   Util.dictionary_merge(remaining_items, store_fluids(storage, entity))
@@ -158,7 +193,7 @@ function EntityHandlers.handle_assembler(entity, override_recipe, clear_inputs)
   local ingredient_multiplier = math.max(1, math.ceil(TARGET_INGREDIENT_CRAFT_TIME * crafts_per_second))
   local input_inventory = entity.get_inventory(defines.inventory.assembling_machine_input)
   if clear_inputs then
-    Storage.take_all_from_inventory(storage, input_inventory, true)
+    Storage.add_from_inventory(storage, input_inventory, true)
     store_fluids(storage, entity, nil, true)
   end
   local input_items = input_inventory.get_contents()
@@ -173,15 +208,19 @@ function EntityHandlers.handle_assembler(entity, override_recipe, clear_inputs)
     local storage_key, storage_amount
     if ingredient.type == "fluid" then
       storage_key = Storage.get_fluid_storage_key(ingredient.name)
-      storage_amount = Storage.count_fluid_in_temperature_range(
+      storage_amount = Storage.count_available_fluid_in_temperature_range(
         storage,
         storage_key,
         ingredient.minimum_temperature,
-        ingredient.maximum_temperature
+        ingredient.maximum_temperature,
+        use_reserved
       )
     else
       storage_key = ingredient.name
-      storage_amount = storage.items[storage_key] or 0
+      storage_amount = Storage.get_available_item_count(
+        storage, storage_key,
+        ingredient.amount * ingredient_multiplier, use_reserved
+      )
     end
     local craftable_ratio = math.floor((storage_amount + (input_items[storage_key] or 0)) / math.ceil(ingredient.amount))
     ingredient_multiplier = Util.clamp(craftable_ratio, 1, ingredient_multiplier)
@@ -197,41 +236,46 @@ function EntityHandlers.handle_assembler(entity, override_recipe, clear_inputs)
     else
       local amount_needed = target_amount - (input_items[ingredient.name] or 0)
       if amount_needed > 0 then
-        local amount_inserted = Storage.put_in_inventory(storage, input_inventory, ingredient.name, amount_needed)
+        local amount_inserted = Storage.put_in_inventory(storage, ingredient.name, input_inventory, amount_needed,
+          use_reserved)
         inserted = inserted or (amount_inserted > 0)
       end
     end
   end
-  inserted = inserted or insert_fluids(storage, entity, fluid_targets)
+  inserted = inserted or insert_fluids(storage, entity, fluid_targets, 0, use_reserved)
   return inserted
 end
 
-function EntityHandlers.handle_furnace(entity)
+function EntityHandlers.handle_furnace(entity, use_reserved)
   local recipe, switched = FurnaceRecipeManager.get_recipe(entity)
   local busy = false
   if recipe then
     local storage = Storage.get_storage(entity)
-    busy = busy or insert_fuel(storage, entity)
-    busy = busy or EntityHandlers.handle_assembler(entity, recipe, switched)
+    busy = busy or insert_fuel(storage, entity, use_reserved, false)
+    busy = busy or EntityHandlers.handle_assembler(entity, use_reserved, recipe, switched)
   end
   return busy
 end
 
-function EntityHandlers.handle_lab(entity)
+function EntityHandlers.handle_lab(entity, use_reserved)
   local pack_count_target = math.ceil(entity.speed_bonus * 0.5) + 1
   local lab_inv = entity.get_inventory(defines.inventory.lab_input)
   local storage = Storage.get_storage(entity)
   local inserted = false
   for i, item_name in ipairs(game.entity_prototypes[entity.name].lab_inputs) do
-    local amount_inserted = Storage.add_to_or_replace_stack(storage, lab_inv[i], item_name, pack_count_target)
+    local amount_inserted = Storage.add_to_or_replace_stack(
+      storage, item_name,
+      lab_inv[i], pack_count_target,
+      false, use_reserved
+    )
     inserted = inserted or (amount_inserted > 0)
   end
   return inserted
 end
 
-function EntityHandlers.handle_mining_drill(entity)
+function EntityHandlers.handle_mining_drill(entity, use_reserved)
   local storage = Storage.get_storage(entity)
-  local busy = insert_fuel(storage, entity)
+  local busy = insert_fuel(storage, entity, use_reserved, false)
   if #entity.fluidbox > 0 then
     -- there is no easy way to know what fluid a miner wants, the fluid is a property of the ore's prototype
     -- and the expected resources aren't simple to find: https://forums.factorio.com/viewtopic.php?p=247019
@@ -242,47 +286,44 @@ function EntityHandlers.handle_mining_drill(entity)
   return busy
 end
 
-function EntityHandlers.handle_boiler(entity)
+function EntityHandlers.handle_boiler(entity, use_reserved)
   local storage = Storage.get_storage(entity)
-  return insert_fuel(storage, entity)
+  return insert_fuel(storage, entity, use_reserved, true)
 end
 
-function EntityHandlers.handle_turret(entity)
+function EntityHandlers.handle_turret(entity, use_reserved)
   local storage = Storage.get_storage(entity)
   return insert_using_priority_set(
-    storage,
-    entity,
-    ItemPriorityManager.get_ammo_key(entity.name, 1),
-    entity.get_inventory(defines.inventory.turret_ammo)[1]
+    storage, entity, ItemPriorityManager.get_ammo_key(entity.name, 1),
+    entity.get_inventory(defines.inventory.turret_ammo)[1], nil,
+    use_reserved, true
   )
 end
 
-function EntityHandlers.handle_car(entity)
+function EntityHandlers.handle_car(entity, use_reserved)
   local storage = Storage.get_storage(entity)
-  local busy = insert_fuel(storage, entity)
+  local busy = insert_fuel(storage, entity, use_reserved, true)
   local ammo_inventory = entity.get_inventory(defines.inventory.car_ammo)
   if ammo_inventory then
     for i = 1, #ammo_inventory do
       busy = busy or insert_using_priority_set(
-        storage,
-        entity,
-        ItemPriorityManager.get_ammo_key(entity.name, i),
-        ammo_inventory[i],
-        ammo_inventory.get_filter(i)
+        storage, entity, ItemPriorityManager.get_ammo_key(entity.name, i),
+        ammo_inventory[i], ammo_inventory.get_filter(i),
+        use_reserved, true
       )
     end
   end
   return busy
 end
 
-function EntityHandlers.handle_sink_chest(entity, ignore_limit)
+function EntityHandlers.handle_sink_chest(entity, use_reserved, ignore_limit)
   local storage = Storage.get_storage(entity)
   local inventory = entity.get_inventory(defines.inventory.chest)
-  local added_items, _ = Storage.take_all_from_inventory(storage, inventory, ignore_limit)
+  local added_items, _ = Storage.add_from_inventory(storage, inventory, ignore_limit)
   return table_size(added_items) > 0
 end
 
-function EntityHandlers.handle_sink_tank(entity)
+function EntityHandlers.handle_sink_tank(entity, use_reserved)
   local storage = Storage.get_storage(entity)
   local fluid = entity.fluidbox[1]
   if fluid == nil then
@@ -296,7 +337,7 @@ function EntityHandlers.handle_sink_tank(entity)
   return false
 end
 
-function EntityHandlers.handle_requester_tank(entity)
+function EntityHandlers.handle_requester_tank(entity, use_reserved)
   local data = global.entity_data[entity.unit_number]
   if not data then
     return false
@@ -327,7 +368,8 @@ function EntityHandlers.handle_requester_tank(entity)
     Storage.get_fluid_storage_key(fluid.name),
     data.min_temp,
     data.max_temp or data.min_temp,
-    amount_needed
+    amount_needed,
+    use_reserved
   )
   fluid.temperature = Util.weighted_average(fluid.temperature, fluid.amount, temperature, amount_removed)
   fluid.amount = fluid.amount + amount_removed

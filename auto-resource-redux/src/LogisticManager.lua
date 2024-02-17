@@ -24,11 +24,19 @@ local function handle_requests(storage, entity, inventory, ammo_inventory, extra
       )
       if amount_needed > 0 then
         if ammo_inventory and ammo_inventory.can_insert(request) then
-          local inserted = Storage.put_in_inventory(storage, ammo_inventory, item_name, amount_needed)
+          local inserted = Storage.put_in_inventory(
+            storage, item_name,
+            ammo_inventory, amount_needed,
+            true
+          )
           amount_needed = amount_needed - inserted
           total_inserted = total_inserted + inserted
         end
-        total_inserted = total_inserted + Storage.put_in_inventory(storage, inventory, item_name, amount_needed)
+        total_inserted = total_inserted + Storage.put_in_inventory(
+          storage, item_name,
+          inventory, amount_needed,
+          true
+        )
       end
     end
   end
@@ -47,7 +55,7 @@ local function handle_player_logistics(player)
   local trash_inv = player.get_inventory(defines.inventory.character_trash)
   local storage = Storage.get_storage(player)
   if trash_inv then
-    Storage.take_all_from_inventory(storage, trash_inv, true)
+    Storage.add_from_inventory(storage, trash_inv, true)
   end
 
   local inventory = player.get_inventory(defines.inventory.character_main)
@@ -84,7 +92,7 @@ local function handle_items_request(storage, player, entity, item_requests)
         local amount_can_give = math.min(storage.items[item_name] or 0, needed_count)
         if amount_can_give > 0 then
           local amount_given = net.insert({ name = item_name, count = amount_can_give })
-          Storage.remove_item(storage, item_name, amount_given)
+          Storage.remove_item(storage, item_name, amount_given, true)
           gave_items = true
         end
       end
@@ -167,7 +175,7 @@ function LogisticManager.handle_sink_chest(entity)
   end
   local storage = Storage.get_storage(entity)
   local inventory = entity.get_inventory(defines.inventory.chest)
-  local added_items, _ = Storage.take_all_from_inventory(storage, inventory, true)
+  local added_items, _ = Storage.add_from_inventory(storage, inventory, true)
   return table_size(added_items) > 0
 end
 

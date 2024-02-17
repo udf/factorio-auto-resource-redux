@@ -4,6 +4,7 @@ local GUIDispatcher = require "src.GUIDispatcher"
 local EntityManager = require "src.EntityManager"
 
 local GUI_CLOSE_EVENT = "arr-entity-panel-close"
+local PRIORITISE_CHECKED_EVENT = "arr-entity-panel-prioritise"
 local EntityTypeGUIAnchors = {
   ["assembling-machine"] = defines.relative_gui_type.assembling_machine_gui,
   ["car"] = defines.relative_gui_type.car_gui,
@@ -19,6 +20,15 @@ local EntityTypeGUIAnchors = {
   ["spider-vehicle"] = defines.relative_gui_type.spider_vehicle_gui
 }
 
+function GUIEntityPanel.initialise()
+  if global.entity_panel_pending_relocations == nil then
+    global.entity_panel_pending_relocations = {}
+  end
+  if global.entity_panel_location == nil then
+    global.entity_panel_location = {}
+  end
+end
+
 local function get_location_key(player, entity_name)
   return ("%d;%s;%s;%s"):format(
     player.index,
@@ -33,9 +43,18 @@ local function add_gui_content(window, entity)
     type = "frame",
     style = "inside_shallow_frame_with_padding"
   })
+
+  local data = global.entity_data[entity.unit_number]
+  if not data then
+    global.entity_data[entity.unit_number] = {}
+    data = {}
+  end
   frame.add({
-    type = "label",
-    caption = "Allan please add details"
+    type = "checkbox",
+    caption = "Prioritise [img=info]",
+    tooltip = "Allow consumption of reserved resources",
+    state = (data.use_reserved == true),
+    tags = { event = PRIORITISE_CHECKED_EVENT, id = entity.unit_number }
   })
 end
 
@@ -161,18 +180,15 @@ function GUIEntityPanel.on_location_changed(event)
   end
 end
 
-function GUIEntityPanel.initialise()
-  if global.entity_panel_pending_relocations == nil then
-    global.entity_panel_pending_relocations = {}
-  end
-  if global.entity_panel_location == nil then
-    global.entity_panel_location = {}
-  end
+local function on_prioritise_checked(event, tags, player)
+  global.entity_data[tags.id].use_reserved = event.element.state
 end
 
 GUIDispatcher.register(defines.events.on_gui_click, GUI_CLOSE_EVENT, on_gui_closed)
 
 GUIDispatcher.register(defines.events.on_gui_opened, nil, on_gui_opened)
 GUIDispatcher.register(defines.events.on_gui_closed, nil, on_gui_closed)
+
+GUIDispatcher.register(defines.events.on_gui_checked_state_changed, PRIORITISE_CHECKED_EVENT, on_prioritise_checked)
 
 return GUIEntityPanel

@@ -3,6 +3,7 @@ local flib_table = require("__flib__/table")
 
 GUIDispatcher.ON_CONFIRM_KEYPRESS = "arr-gui-confirm"
 GUIDispatcher.ON_COPY_SETTINGS_KEYPRESS = "arr-copy-entity-settings"
+GUIDispatcher.ON_COPY_CONDITIONS_KEYPRESS = "arr-copy-entity-conditions"
 
 -- { on_click = { event_tag = fn, ... }, ... }
 local registered_tagged_events = {
@@ -15,6 +16,7 @@ local registered_tagged_events = {
 
   [GUIDispatcher.ON_CONFIRM_KEYPRESS] = {},
   [GUIDispatcher.ON_COPY_SETTINGS_KEYPRESS] = {},
+  [GUIDispatcher.ON_COPY_CONDITIONS_KEYPRESS] = {},
 
   [defines.events.on_gui_confirmed] = {},
   [defines.events.on_gui_opened] = {},

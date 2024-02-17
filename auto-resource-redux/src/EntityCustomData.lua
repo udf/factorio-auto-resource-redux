@@ -1,5 +1,6 @@
 EntityCustomData = {}
 local flib_table = require("__flib__/table")
+local EntityManager = require "src.EntityManager"
 local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
 local GUIDispatcher = require "src.GUIDispatcher"
 local GUIRequesterTank = require "src.GUIRequesterTank"
@@ -137,6 +138,25 @@ local function get_paste_tool(entity)
   end
 end
 
+local function copy_entity_data(player, entity, tool_name, tool_label, extra_data, add_suffix)
+  local cursor = player.cursor_stack
+  local selected_data = global.entity_data[player.selected.unit_number]
+  if cursor.set_stack({ name = tool_name, count = 1 }) then
+    local label_suffix = ""
+    if add_suffix and selected_data.use_reserved then
+      label_suffix = " (prioritised)"
+    end
+    cursor.label = tool_label .. label_suffix
+    player.cursor_stack_temporary = true
+  end
+  global.entity_data_clipboard[player.index] = {
+    name = entity.name,
+    type = entity.type,
+    extra_data = extra_data,
+    data = flib_table.deep_copy(selected_data),
+  }
+end
+
 local function on_copy(event, tags, player)
   local selected = player.selected
   local cursor = player.cursor_stack
@@ -145,20 +165,24 @@ local function on_copy(event, tags, player)
   end
 
   local tool_name, label_fn, extra_data = get_paste_tool(selected)
-
   if tool_name then
-    local selected_data = global.entity_data[player.selected.unit_number]
-    if cursor.set_stack({ name = tool_name, count = 1 }) then
-      cursor.label = label_fn(extra_data or selected_data, selected_data)
-      player.cursor_stack_temporary = true
-    end
-    global.entity_data_clipboard[event.player_index] = {
-      name = selected.name,
-      type = selected.type,
-      extra_data = extra_data,
-      data = flib_table.deep_copy(selected_data),
-    }
+    local selected_data = global.entity_data[selected.unit_number]
+    local label = label_fn(extra_data or selected_data, selected_data)
+    copy_entity_data(player, selected, tool_name, label, extra_data, true)
   end
+end
+
+local function on_copy_conditions(event, tags, player)
+  local selected = player.selected
+  local cursor = player.cursor_stack
+  if not selected or cursor.valid_for_read or not EntityManager.can_manage(selected) then
+    return
+  end
+
+  local selected_data = global.entity_data[selected.unit_number] or {}
+  local label = { "Auto Resource:" }
+  table.insert(label, selected_data.use_reserved and "Prioritise" or "Not prioritised")
+  copy_entity_data(player, selected, "arr-paste-tool-condition", table.concat(label, " "))
 end
 
 function EntityCustomData.on_player_selected_area(event)
@@ -169,6 +193,7 @@ function EntityCustomData.on_player_selected_area(event)
         global.entity_data[entity.unit_number] = flib_table.deep_copy(src.data)
       end
     end
+    return
   end
 
   local furnace_tool_category = event.item:match("arr%-paste%-tool%-furnace%-(.+)")
@@ -176,9 +201,32 @@ function EntityCustomData.on_player_selected_area(event)
     for _, entity in ipairs(event.entities) do
       FurnaceRecipeManager.set_recipe(entity, src.extra_data)
     end
+    return
+  end
+
+  if event.item == "arr-paste-tool-condition" then
+    local src_data = src.data or {}
+    for _, entity in ipairs(event.entities) do
+      local entity_data = global.entity_data[entity.unit_number]
+      if entity_data == nil then
+        entity_data = {}
+        global.entity_data[entity.unit_number] = entity_data
+      end
+      entity_data.use_reserved = src_data.use_reserved
+      entity_data.condition = src_data.condition
+    end
+    return
   end
 end
 
+function EntityCustomData.set_use_reserved(entity, use_reserved)
+  if not global.entity_data[entity.unit_number] then
+    global.entity_data[entity.unit_number] = {}
+  end
+  global.entity_data[entity.unit_number].use_reserved = use_reserved
+end
+
 GUIDispatcher.register(GUIDispatcher.ON_COPY_SETTINGS_KEYPRESS, nil, on_copy)
+GUIDispatcher.register(GUIDispatcher.ON_COPY_CONDITIONS_KEYPRESS, nil, on_copy_conditions)
 
 return EntityCustomData

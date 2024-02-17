@@ -79,6 +79,7 @@ function EntityManager.initialise()
   end
 end
 
+local busy_counters = {}
 function EntityManager.on_tick()
   local total_processed = 0
   for queue_key, spec in pairs(entity_queue_specs) do
@@ -91,11 +92,28 @@ function EntityManager.on_tick()
       end
       local entity_id = LoopBuffer.next(queue)
       local entity = global.entities[entity_id]
+      local use_reserved = (global.entity_data[entity_id] or {}).use_reserved
       if entity == nil or not entity.valid then
         LoopBuffer.remove_current(queue)
       elseif not entity.to_be_deconstructed() then
-        spec.handler(entity)
+        local busy = spec.handler(entity, use_reserved)
+        if busy then
+          busy_counters[queue_key] = (busy_counters[queue_key] or 0) + 1
+        end
         num_processed = num_processed + 1
+      end
+      if queue.iter_index == 1 and queue.size > 10 then
+        local count = busy_counters[queue_key] or 0
+        -- print(("%s: %d/%d (%.2f%%) busy, %d/%d (%.2f%%) idle"):format(
+        --   queue_key,
+        --   count,
+        --   queue.size,
+        --   count / queue.size * 100,
+        --   (queue.size - count),
+        --   queue.size,
+        --   (queue.size - count) / queue.size * 100
+        -- ))
+        busy_counters[queue_key] = 0
       end
     until num_processed >= max_updates or num_processed >= queue.size
     total_processed = total_processed + num_processed
@@ -141,7 +159,7 @@ function EntityManager.on_entity_removed(event, died)
   local attached_chest = global.entities[global.sink_chest_parents[entity.unit_number]]
   if attached_chest ~= nil and attached_chest.valid then
     if not died then
-      EntityHandlers.handle_sink_chest(attached_chest, true)
+      EntityHandlers.handle_sink_chest(attached_chest, nil, true)
     end
     attached_chest.destroy({ raise_destroy = true })
   end
