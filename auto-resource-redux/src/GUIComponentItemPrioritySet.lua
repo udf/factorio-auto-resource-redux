@@ -70,12 +70,15 @@ local function update_buttons(table_elem, priority_sets)
           R.HINT, "Control + Right-click", R.HINT_END, " to move to back.",
         }),
         tags = { event = BUTTON_CLICK_EVENT },
-        toggled = (item_name == selected_item)
       }
     )
   end
 
   update_slider(slider_flow, priority_sets, set_key)
+  selected_item = slider_flow.tags.item
+  if selected_item then
+    table_elem[selected_item].toggled = true
+  end
 end
 
 local function get_component_key(domain_key, set_key)
