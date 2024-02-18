@@ -142,7 +142,7 @@ end
 
 local function copy_entity_data(player, entity, tool_name, tool_label, extra_data, add_suffix)
   local cursor = player.cursor_stack
-  local selected_data = global.entity_data[player.selected.unit_number]
+  local selected_data = global.entity_data[player.selected.unit_number] or {}
   if cursor.set_stack({ name = tool_name, count = 1 }) then
     local label_suffix = ""
     if add_suffix and selected_data.use_reserved then
@@ -168,7 +168,7 @@ local function on_copy(event, tags, player)
 
   local tool_name, label_fn, extra_data = get_paste_tool(selected)
   if tool_name then
-    local selected_data = global.entity_data[selected.unit_number]
+    local selected_data = global.entity_data[selected.unit_number] or {}
     local label = label_fn(extra_data or selected_data, selected_data)
     copy_entity_data(player, selected, tool_name, label, extra_data, true)
   end
