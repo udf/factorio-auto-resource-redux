@@ -4,7 +4,7 @@ function FurnaceRecipeManager.get_recipe_label(recipe)
   return ("[recipe=%s] %s (%s)"):format(recipe.name, recipe.name, recipe.category)
 end
 
-local function clear_pending_recipe(entity)
+function FurnaceRecipeManager.clear_pending_recipe(entity)
   local id = entity.unit_number
   local recipe_data = global.furnace_recipes[id]
   if recipe_data then
@@ -35,7 +35,7 @@ function FurnaceRecipeManager.get_new_recipe(entity)
   local target_recipe = recipe_data.recipe
   -- can no longer switch, or successfully switched
   if not target_recipe.valid or (current_recipe and current_recipe.name == target_recipe.name) then
-    clear_pending_recipe(entity)
+    FurnaceRecipeManager.clear_pending_recipe(entity)
     return current_recipe, false
   end
 
@@ -53,7 +53,7 @@ end
 
 function FurnaceRecipeManager.set_recipe(entity, recipe)
   if global.furnace_recipes[entity.unit_number] then
-    clear_pending_recipe(entity)
+    FurnaceRecipeManager.clear_pending_recipe(entity)
   end
   local offset = { 0, -1.1 }
   local bg = rendering.draw_sprite({

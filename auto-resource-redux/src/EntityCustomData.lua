@@ -234,6 +234,15 @@ function EntityCustomData.on_player_selected_area(event)
   end
 end
 
+function EntityCustomData.on_player_alt_selected_area(event)
+  local furnace_tool_category = event.item:match("arr%-paste%-tool%-furnace%-(.+)")
+  if furnace_tool_category then
+    for _, entity in ipairs(event.entities) do
+      FurnaceRecipeManager.clear_pending_recipe(entity)
+    end
+  end
+end
+
 function EntityCustomData.set_use_reserved(entity, use_reserved)
   if not global.entity_data[entity.unit_number] then
     global.entity_data[entity.unit_number] = {}
