@@ -129,15 +129,18 @@ function EntityCustomData.on_settings_pasted(event)
   EntityCustomData.on_cloned(event)
 end
 
-local function get_paste_tool(entity)
-  if entity.name == "arr-requester-tank" then
-    return "arr-paste-tool-requester-tank", GUIRequesterTank.get_paste_label
-  elseif entity.type == "furnace" then
-    local recipe = entity.get_recipe() or entity.previous_recipe
-    if recipe then
-      return "arr-paste-tool-furnace-" .. recipe.category, FurnaceRecipeManager.get_recipe_label, recipe
-    end
+local function get_condition_label(data)
+  local label = { data.use_reserved and "Prioritise; " or "Not prioritised; " }
+  local condition = data.condition
+  if condition and condition.item then
+    local fluid_name = Storage.unpack_fluid_item_name(condition.item)
+    table.insert(label, (fluid_name and "[fluid=%s]" or "[item=%s]"):format(fluid_name or condition.item))
+    table.insert(label, " " .. (condition.op or EntityCondition.OPERATIONS[1]) .. " ")
+    table.insert(label, (condition.value or 0) .. "%")
+  else
+    table.insert(label, "Always on")
   end
+  return table.concat(label)
 end
 
 local function copy_entity_data(player, entity, tool_name, tool_label, extra_data, add_suffix)
@@ -145,8 +148,8 @@ local function copy_entity_data(player, entity, tool_name, tool_label, extra_dat
   local selected_data = global.entity_data[player.selected.unit_number] or {}
   if cursor.set_stack({ name = tool_name, count = 1 }) then
     local label_suffix = ""
-    if add_suffix and selected_data.use_reserved then
-      label_suffix = " (prioritised)"
+    if add_suffix then
+      label_suffix = " (" .. get_condition_label(selected_data) .. ")"
     end
     cursor.label = tool_label .. label_suffix
     player.cursor_stack_temporary = true
@@ -166,10 +169,21 @@ local function on_copy(event, tags, player)
     return
   end
 
-  local tool_name, label_fn, extra_data = get_paste_tool(selected)
+  local selected_data = global.entity_data[selected.unit_number] or {}
+  local tool_name, label, extra_data
+  if selected.name == "arr-requester-tank" then
+    tool_name = "arr-paste-tool-requester-tank"
+    label = GUIRequesterTank.get_paste_label(selected_data)
+  elseif selected.type == "furnace" then
+    local recipe = selected.get_recipe() or selected.previous_recipe
+    if recipe then
+      tool_name = "arr-paste-tool-furnace-" .. recipe.category
+      label = FurnaceRecipeManager.get_recipe_label(recipe)
+      extra_data = recipe
+    end
+  end
+
   if tool_name then
-    local selected_data = global.entity_data[selected.unit_number] or {}
-    local label = label_fn(extra_data or selected_data, selected_data)
     copy_entity_data(player, selected, tool_name, label, extra_data, true)
   end
 end
@@ -182,18 +196,8 @@ local function on_copy_conditions(event, tags, player)
   end
 
   local selected_data = global.entity_data[selected.unit_number] or {}
-  local label = { "Auto Resource:" }
-  table.insert(label, selected_data.use_reserved and "Prioritise; " or "Not prioritised; ")
-  local condition = selected_data.condition
-  if condition and condition.item then
-    local fluid_name = Storage.unpack_fluid_item_name(condition.item)
-    table.insert(label, (fluid_name and "[fluid=%s]" or "[item=%s]"):format(fluid_name or condition.item))
-    table.insert(label, " " .. (condition.op or EntityCondition.OPERATIONS[1]) .. " ")
-    table.insert(label, (condition.value or 0) .. "%")
-  else
-    table.insert(label, "Always on")
-  end
-  copy_entity_data(player, selected, "arr-paste-tool-condition", table.concat(label))
+  local label = "Auto Resource:" .. get_condition_label(selected_data)
+  copy_entity_data(player, selected, "arr-paste-tool-condition", label)
 end
 
 function EntityCustomData.on_player_selected_area(event)
@@ -212,10 +216,9 @@ function EntityCustomData.on_player_selected_area(event)
     for _, entity in ipairs(event.entities) do
       FurnaceRecipeManager.set_recipe(entity, src.extra_data)
     end
-    return
   end
 
-  if event.item == "arr-paste-tool-condition" then
+  if furnace_tool_category or event.item == "arr-paste-tool-condition" then
     local src_data = src.data or {}
     for _, entity in ipairs(event.entities) do
       local entity_data = global.entity_data[entity.unit_number]
