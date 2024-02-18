@@ -135,7 +135,8 @@ local function get_condition_label(data)
   if condition and condition.item then
     local fluid_name = Storage.unpack_fluid_item_name(condition.item)
     table.insert(label, (fluid_name and "[fluid=%s]" or "[item=%s]"):format(fluid_name or condition.item))
-    table.insert(label, " " .. (condition.op or EntityCondition.OPERATIONS[1]) .. " ")
+    local op_str = EntityCondition.OPERATIONS[condition.op] or EntityCondition.OPERATIONS[1]
+    table.insert(label, " " .. op_str .. " ")
     table.insert(label, (condition.value or 0) .. "%")
   else
     table.insert(label, "Always on")
@@ -175,7 +176,7 @@ local function on_copy(event, tags, player)
     tool_name = "arr-paste-tool-requester-tank"
     label = GUIRequesterTank.get_paste_label(selected_data)
   elseif selected.type == "furnace" then
-    local recipe = selected.get_recipe() or selected.previous_recipe
+    local recipe = FurnaceRecipeManager.get_recipe(selected)
     if recipe then
       tool_name = "arr-paste-tool-furnace-" .. recipe.category
       label = FurnaceRecipeManager.get_recipe_label(recipe)

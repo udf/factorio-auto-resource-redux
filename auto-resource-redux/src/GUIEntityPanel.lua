@@ -3,6 +3,7 @@ local GUIEntityPanel = {}
 local flib_table = require("__flib__/table")
 local EntityCondition = require "src.EntityCondition"
 local EntityManager = require "src.EntityManager"
+local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
 local GUICommon = require "src.GUICommon"
 local GUIComponentSliderInput = require "src.GUIComponentSliderInput"
 local GUIDispatcher = require "src.GUIDispatcher"
@@ -14,6 +15,7 @@ local CONDITION_ITEM_EVENT = "arr-entity-panel-condition-item"
 local CONDITION_OP_EVENT = "arr-entity-panel-condition-op"
 local CONDITION_VALUE_BUTTON_EVENT = "arr-entity-panel-condition-button"
 local CONDITION_VALUE_CHANGED_EVENT = "arr-entity-panel-condition-value-changed"
+local FURNACE_RECIPE_EVENT = "arr-entity-panel-furnace-recipe"
 
 local EntityTypeGUIAnchors = {
   ["assembling-machine"] = defines.relative_gui_type.assembling_machine_gui,
@@ -146,6 +148,38 @@ local function add_gui_content(window, entity)
     type = "label",
     caption = "%",
   })
+
+  if entity.type == "furnace" then
+    frame.add({
+      type = "line",
+      style = "control_behavior_window_line"
+    })
+    local recipe_frame = frame.add({
+      type = "frame",
+      style = "invisible_frame",
+      direction = "vertical"
+    })
+    local recipe_label = recipe_frame.add({
+      type = "label",
+      style = "heading_2_label",
+      caption = { "", {"description.recipe"}, " [img=info]" },
+      tooltip = "The new recipe will be applied on the next production cycle, when the productivity bar is empty."
+    })
+    recipe_label.style.padding = {4, 0, 4, 0}
+    local current_recipe = FurnaceRecipeManager.get_recipe(entity)
+    local filters = {}
+    for category, _ in pairs(entity.prototype.crafting_categories) do
+      table.insert(filters, { filter = "category", category = category })
+    end
+    recipe_frame.add({
+      type = "choose-elem-button",
+      elem_type = "recipe",
+      style = "slot_button_in_shallow_frame",
+      recipe = current_recipe and current_recipe.name or nil,
+      elem_filters = filters,
+      tags = { id = data_id, event = FURNACE_RECIPE_EVENT }
+    })
+  end
 end
 
 local function close_gui(player)
@@ -301,6 +335,16 @@ local function on_condition_value_changed(event, tags, player)
   global.entity_data[tags.id].condition.value = tonumber(new_value)
 end
 
+local function on_furnace_recipe_changed(event, tags, player)
+  local new_recipe_name = event.element.elem_value
+  local entity = global.entities[event.element.tags.id]
+  if not new_recipe_name then
+    event.element.elem_value = FurnaceRecipeManager.get_recipe(entity).name
+    return
+  end
+  FurnaceRecipeManager.set_recipe(entity, game.recipe_prototypes[new_recipe_name])
+end
+
 GUIDispatcher.register(defines.events.on_gui_click, GUI_CLOSE_EVENT, on_gui_closed)
 
 GUIDispatcher.register(defines.events.on_gui_opened, nil, on_gui_opened)
@@ -313,5 +357,7 @@ GUIDispatcher.register(defines.events.on_gui_selection_state_changed, CONDITION_
 GUIDispatcher.register(defines.events.on_gui_click, CONDITION_VALUE_BUTTON_EVENT, on_condition_value_clicked)
 GUIDispatcher.register(defines.events.on_gui_value_changed, CONDITION_VALUE_CHANGED_EVENT, on_condition_value_changed)
 GUIDispatcher.register(defines.events.on_gui_text_changed, CONDITION_VALUE_CHANGED_EVENT, on_condition_value_changed)
+
+GUIDispatcher.register(defines.events.on_gui_elem_changed, FURNACE_RECIPE_EVENT, on_furnace_recipe_changed)
 
 return GUIEntityPanel

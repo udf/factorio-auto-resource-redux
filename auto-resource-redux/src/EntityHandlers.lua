@@ -247,7 +247,7 @@ function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
 end
 
 function EntityHandlers.handle_furnace(o)
-  local recipe, switched = FurnaceRecipeManager.get_recipe(o.entity)
+  local recipe, switched = FurnaceRecipeManager.get_new_recipe(o.entity)
   local busy = false
   if recipe then
     if not o.paused then

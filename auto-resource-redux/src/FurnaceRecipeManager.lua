@@ -19,6 +19,15 @@ end
 function FurnaceRecipeManager.get_recipe(entity)
   local current_recipe = entity.get_recipe() or entity.previous_recipe
   local recipe_data = global.furnace_recipes[entity.unit_number]
+  if not recipe_data or not recipe_data.recipe.valid then
+    return current_recipe
+  end
+  return recipe_data.recipe
+end
+
+function FurnaceRecipeManager.get_new_recipe(entity)
+  local current_recipe = entity.get_recipe() or entity.previous_recipe
+  local recipe_data = global.furnace_recipes[entity.unit_number]
   if not recipe_data then
     return current_recipe, false
   end
