@@ -32,7 +32,7 @@ local managed_entity_names = {}
 for group_name, filter in pairs(EntityGroups.entity_group_filters) do
   if filter.filter == "type" then
     table.insert(managed_entity_types, filter.type)
-  elseif filter.filter == "name" then
+  elseif filter.filter == "name" and filter.name ~= "arr-hidden-sink-chest" then
     table.insert(managed_entity_names, filter.name)
   else
     assert(false, "FIXME: Cannot determine selection tool filters: unknown entity filter in EntityGroups.lua!")
