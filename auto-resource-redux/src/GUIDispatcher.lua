@@ -13,6 +13,7 @@ local registered_tagged_events = {
   [defines.events.on_gui_text_changed] = {},
   [defines.events.on_gui_elem_changed] = {},
   [defines.events.on_gui_checked_state_changed] = {},
+  [defines.events.on_gui_selection_state_changed] = {},
 
   [GUIDispatcher.ON_CONFIRM_KEYPRESS] = {},
   [GUIDispatcher.ON_COPY_SETTINGS_KEYPRESS] = {},

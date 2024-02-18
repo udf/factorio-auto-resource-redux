@@ -83,6 +83,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, GUIDispatcher.on_ev
 script.on_event(GUIDispatcher.ON_CONFIRM_KEYPRESS, GUIDispatcher.on_event)
 script.on_event(defines.events.on_gui_confirmed, GUIDispatcher.on_event)
 script.on_event(defines.events.on_gui_opened, GUIDispatcher.on_event)
+script.on_event(defines.events.on_gui_selection_state_changed, GUIDispatcher.on_event)
 script.on_event(defines.events.on_gui_location_changed, GUIEntityPanel.on_location_changed)
 
 -- blueprint/settings

@@ -1,10 +1,20 @@
 local GUIEntityPanel = {}
-local GUICommon = require "src.GUICommon"
-local GUIDispatcher = require "src.GUIDispatcher"
+
+local flib_table = require("__flib__/table")
+local EntityCondition = require "src.EntityCondition"
 local EntityManager = require "src.EntityManager"
+local GUICommon = require "src.GUICommon"
+local GUIComponentSliderInput = require "src.GUIComponentSliderInput"
+local GUIDispatcher = require "src.GUIDispatcher"
+local Storage = require "src.Storage"
 
 local GUI_CLOSE_EVENT = "arr-entity-panel-close"
 local PRIORITISE_CHECKED_EVENT = "arr-entity-panel-prioritise"
+local CONDITION_ITEM_EVENT = "arr-entity-panel-condition-item"
+local CONDITION_OP_EVENT = "arr-entity-panel-condition-op"
+local CONDITION_VALUE_BUTTON_EVENT = "arr-entity-panel-condition-button"
+local CONDITION_VALUE_CHANGED_EVENT = "arr-entity-panel-condition-value-changed"
+
 local EntityTypeGUIAnchors = {
   ["assembling-machine"] = defines.relative_gui_type.assembling_machine_gui,
   ["car"] = defines.relative_gui_type.car_gui,
@@ -41,20 +51,100 @@ end
 local function add_gui_content(window, entity)
   local frame = window.add({
     type = "frame",
-    style = "inside_shallow_frame_with_padding"
+    style = "inside_shallow_frame_with_padding",
+    direction = "vertical"
   })
 
-  local data = global.entity_data[entity.unit_number]
+  local data_id = entity.unit_number
+  -- Prioritise
+  local data = global.entity_data[data_id]
   if not data then
-    global.entity_data[entity.unit_number] = {}
     data = {}
+    global.entity_data[data_id] = data
   end
   frame.add({
     type = "checkbox",
     caption = "Prioritise [img=info]",
     tooltip = "Allow consumption of reserved resources",
     state = (data.use_reserved == true),
-    tags = { event = PRIORITISE_CHECKED_EVENT, id = entity.unit_number }
+    tags = { id = data_id, event = PRIORITISE_CHECKED_EVENT }
+  })
+  frame.add({
+    type = "line",
+    style = "control_behavior_window_line"
+  })
+
+  -- Condition
+  if not data.condition then
+    data.condition = {}
+  end
+  local condition = data.condition
+  local condition_value = condition.value or 0
+  local condition_frame = frame.add({
+    type = "frame",
+    name = "condition_frame",
+    style = "invisible_frame_with_title",
+    caption = { "gui-control-behavior-modes-guis.enabled-condition" },
+    direction = "vertical"
+  })
+  local condition_controls_flow = condition_frame.add({
+    type = "flow",
+    name = "condition_controls_flow",
+    direction = "horizontal"
+  })
+  condition_controls_flow.style.vertical_align = "center"
+  local fluid_name = Storage.unpack_fluid_item_name(condition.item or "")
+  condition_controls_flow.add({
+    type = "choose-elem-button",
+    elem_type = "signal",
+    style = "slot_button_in_shallow_frame",
+    signal = {
+      type = fluid_name and "fluid" or "item",
+      name = fluid_name or condition.item
+    },
+    tags = { id = data_id, event = CONDITION_ITEM_EVENT }
+  })
+  condition_controls_flow.add({
+    type = "drop-down",
+    items = EntityCondition.OPERATIONS,
+    selected_index = flib_table.find(EntityCondition.OPERATIONS, condition.op) or 1,
+    style = "circuit_condition_comparator_dropdown",
+    tags = { id = data_id, event = CONDITION_OP_EVENT }
+  })
+  local condition_value_btn = condition_controls_flow.add({
+    type = "button",
+    name = "condition_value",
+    style = "slot_button_in_shallow_frame",
+    caption = condition_value .. "%",
+    tags = { event = CONDITION_VALUE_BUTTON_EVENT }
+  })
+  condition_value_btn.style.font_color = { 1, 1, 1 }
+
+  local condition_slider_flow = condition_frame.add({
+    type = "flow",
+    name = "slider_flow",
+    style = "player_input_horizontal_flow",
+  })
+  condition_slider_flow.style.top_padding = 4
+  condition_slider_flow.visible = false
+  GUIComponentSliderInput.create(
+    condition_slider_flow,
+    {
+      value = condition_value,
+      maximum_value = 100,
+      style = "slider",
+      tags = { id = data_id, event = { [CONDITION_VALUE_CHANGED_EVENT] = true } }
+    },
+    {
+      allow_negative = false,
+      style = "very_short_number_textfield",
+      tags = { id = data_id, event = { [CONDITION_VALUE_CHANGED_EVENT] = true } }
+    }
+  )
+  condition_slider_flow.slider.style.width = 100
+  condition_slider_flow.add({
+    type = "label",
+    caption = "%",
   })
 end
 
@@ -184,11 +274,44 @@ local function on_prioritise_checked(event, tags, player)
   global.entity_data[tags.id].use_reserved = event.element.state
 end
 
+local function on_condition_item_changed(event, tags, player)
+  local signal = event.element.elem_value
+  local storage_key = signal.type == "fluid" and Storage.get_fluid_storage_key(signal.name) or signal.name
+  if signal.type == "virtual" or not Storage.can_store(storage_key) then
+    event.element.elem_value = nil
+    return
+  end
+  global.entity_data[tags.id].condition.item = storage_key
+end
+
+local function on_condition_op_changed(event, tags, player)
+  global.entity_data[tags.id].condition.op = event.element.selected_index
+end
+
+local function on_condition_value_clicked(event, tags, player)
+  local slider_flow = event.element.parent.parent.slider_flow
+  event.element.toggled = not event.element.toggled
+  slider_flow.visible = event.element.toggled
+end
+
+local function on_condition_value_changed(event, tags, player)
+  local new_value = event.element.parent.input.text
+  local condition_controls_flow = event.element.parent.parent.condition_controls_flow
+  condition_controls_flow.condition_value.caption = new_value .. "%"
+  global.entity_data[tags.id].condition.value = tonumber(new_value)
+end
+
 GUIDispatcher.register(defines.events.on_gui_click, GUI_CLOSE_EVENT, on_gui_closed)
 
 GUIDispatcher.register(defines.events.on_gui_opened, nil, on_gui_opened)
 GUIDispatcher.register(defines.events.on_gui_closed, nil, on_gui_closed)
 
 GUIDispatcher.register(defines.events.on_gui_checked_state_changed, PRIORITISE_CHECKED_EVENT, on_prioritise_checked)
+
+GUIDispatcher.register(defines.events.on_gui_elem_changed, CONDITION_ITEM_EVENT, on_condition_item_changed)
+GUIDispatcher.register(defines.events.on_gui_selection_state_changed, CONDITION_OP_EVENT, on_condition_op_changed)
+GUIDispatcher.register(defines.events.on_gui_click, CONDITION_VALUE_BUTTON_EVENT, on_condition_value_clicked)
+GUIDispatcher.register(defines.events.on_gui_value_changed, CONDITION_VALUE_CHANGED_EVENT, on_condition_value_changed)
+GUIDispatcher.register(defines.events.on_gui_text_changed, CONDITION_VALUE_CHANGED_EVENT, on_condition_value_changed)
 
 return GUIEntityPanel

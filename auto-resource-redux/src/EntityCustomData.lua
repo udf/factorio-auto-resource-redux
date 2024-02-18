@@ -1,9 +1,11 @@
 EntityCustomData = {}
 local flib_table = require("__flib__/table")
+local EntityCondition = require "src.EntityCondition"
 local EntityManager = require "src.EntityManager"
 local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
 local GUIDispatcher = require "src.GUIDispatcher"
 local GUIRequesterTank = require "src.GUIRequesterTank"
+local Storage = require "src.Storage"
 
 local DATA_TAG = "arr-data"
 
@@ -181,8 +183,17 @@ local function on_copy_conditions(event, tags, player)
 
   local selected_data = global.entity_data[selected.unit_number] or {}
   local label = { "Auto Resource:" }
-  table.insert(label, selected_data.use_reserved and "Prioritise" or "Not prioritised")
-  copy_entity_data(player, selected, "arr-paste-tool-condition", table.concat(label, " "))
+  table.insert(label, selected_data.use_reserved and "Prioritise; " or "Not prioritised; ")
+  local condition = selected_data.condition
+  if condition and condition.item then
+    local fluid_name = Storage.unpack_fluid_item_name(condition.item)
+    table.insert(label, (fluid_name and "[fluid=%s]" or "[item=%s]"):format(fluid_name or condition.item))
+    table.insert(label, " " .. (condition.op or EntityCondition.OPERATIONS[1]) .. " ")
+    table.insert(label, (condition.value or 0) .. "%")
+  else
+    table.insert(label, "Always on")
+  end
+  copy_entity_data(player, selected, "arr-paste-tool-condition", table.concat(label))
 end
 
 function EntityCustomData.on_player_selected_area(event)
@@ -213,7 +224,7 @@ function EntityCustomData.on_player_selected_area(event)
         global.entity_data[entity.unit_number] = entity_data
       end
       entity_data.use_reserved = src_data.use_reserved
-      entity_data.condition = src_data.condition
+      entity_data.condition = flib_table.deep_copy(src_data.condition)
     end
     return
   end

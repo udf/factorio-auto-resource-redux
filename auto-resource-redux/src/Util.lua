@@ -106,6 +106,17 @@ function Util.table_sum_vals(dict)
   return sum
 end
 
+--- Gets the minimum value from a table
+---@param dict table The table to get values from
+---@return number minimum The minimum value
+function Util.table_min_val(dict)
+  local min = math.huge
+  for k, v in pairs(dict) do
+    min = math.min(min, v)
+  end
+  return min
+end
+
 --- Extends the dest array with the contents of the src array
 ---@param dest table The destination array (will be modified)
 ---@param src table The source array

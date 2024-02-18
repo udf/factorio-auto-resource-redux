@@ -168,21 +168,22 @@ local function handle_player_alerts(player)
   end
 end
 
-function LogisticManager.handle_sink_chest(entity)
+function LogisticManager.handle_sink_chest(o)
   clean_up_deadline_table(global.busy_logistic_chests)
-  if global.busy_logistic_chests[entity.unit_number] then
+  if global.busy_logistic_chests[o.entity.unit_number] or o.paused then
     return false
   end
-  local storage = Storage.get_storage(entity)
-  local inventory = entity.get_inventory(defines.inventory.chest)
-  local added_items, _ = Storage.add_from_inventory(storage, inventory, true)
+  local inventory = o.entity.get_inventory(defines.inventory.chest)
+  local added_items, _ = Storage.add_from_inventory(o.storage, inventory, true)
   return table_size(added_items) > 0
 end
 
-function LogisticManager.handle_requester_chest(entity)
-  local storage = Storage.get_storage(entity)
-  local inventory = entity.get_inventory(defines.inventory.chest)
-  return handle_requests(storage, entity, inventory)
+function LogisticManager.handle_requester_chest(o)
+  if o.paused then
+    return false
+  end
+  local inventory = o.entity.get_inventory(defines.inventory.chest)
+  return handle_requests(o.storage, o.entity, inventory)
 end
 
 function LogisticManager.initialise()

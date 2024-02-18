@@ -1,9 +1,11 @@
 local EntityManager = {}
 
+local EntityCondition = require "src.EntityCondition"
 local EntityGroups = require "src.EntityGroups"
 local EntityHandlers = require "src.EntityHandlers"
 local LogisticManager = require "src.LogisticManager"
 local LoopBuffer = require "src.LoopBuffer"
+local Storage = require "src.Storage"
 local Util = require "src.Util"
 
 local entity_queue_specs = {
@@ -80,6 +82,7 @@ function EntityManager.initialise()
 end
 
 local busy_counters = {}
+local evaluate_condition = EntityCondition.evaluate
 function EntityManager.on_tick()
   local total_processed = 0
   for queue_key, spec in pairs(entity_queue_specs) do
@@ -92,11 +95,19 @@ function EntityManager.on_tick()
       end
       local entity_id = LoopBuffer.next(queue)
       local entity = global.entities[entity_id]
-      local use_reserved = (global.entity_data[entity_id] or {}).use_reserved
       if entity == nil or not entity.valid then
         LoopBuffer.remove_current(queue)
       elseif not entity.to_be_deconstructed() then
-        local busy = spec.handler(entity, use_reserved)
+        local entity_data = global.entity_data[entity_id] or {}
+        local use_reserved = entity_data.use_reserved
+        local storage = Storage.get_storage(entity)
+        local running = evaluate_condition(entity_data.condition, storage)
+        local busy = spec.handler({
+          entity = entity,
+          storage = storage,
+          use_reserved = use_reserved,
+          paused = not running
+        })
         if busy then
           busy_counters[queue_key] = (busy_counters[queue_key] or 0) + 1
         end
@@ -159,7 +170,14 @@ function EntityManager.on_entity_removed(event, died)
   local attached_chest = global.entities[global.sink_chest_parents[entity.unit_number]]
   if attached_chest ~= nil and attached_chest.valid then
     if not died then
-      EntityHandlers.handle_sink_chest(attached_chest, nil, true)
+      EntityHandlers.handle_sink_chest(
+        {
+          entity = attached_chest,
+          storage = Storage.get_storage(attached_chest),
+          use_reserved = true,
+        },
+        nil
+      )
     end
     attached_chest.destroy({ raise_destroy = true })
   end

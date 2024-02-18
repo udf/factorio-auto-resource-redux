@@ -71,6 +71,10 @@ function Storage.initialise()
   end
 end
 
+function Storage.can_store(storage_key)
+  return blacklisted_items[storage_key] == nil
+end
+
 --- Prints info about a setting being changed for the force
 ---@param setting_name string
 ---@param storage_key string
@@ -130,7 +134,7 @@ local function get_default_item_limit(storage_key)
 end
 
 function Storage.get_item_limit(storage, storage_key)
-  if blacklisted_items[storage_key] ~= nil then
+  if not Storage.can_store(storage_key) then
     return nil
   end
   local limit = storage.limits[storage_key]
@@ -142,7 +146,7 @@ function Storage.get_item_limit(storage, storage_key)
 end
 
 function Storage.set_item_limit_and_reservation(storage, storage_key, src_entity, new_limit, new_reservation)
-  if blacklisted_items[storage_key] ~= nil then
+  if not Storage.can_store(storage_key) then
     return
   end
   local new_limit, new_reservation, cur_limit, cur_reservation = Storage.calc_new_limit_and_reservation(
@@ -220,7 +224,7 @@ local function get_item_or_fluid_count(storage, item_or_fluid_name, temperature)
 end
 
 local function add_item_or_fluid(storage, item_or_fluid_name, amount, ignore_limit, temperature)
-  if blacklisted_items[item_or_fluid_name] ~= nil then
+  if not Storage.can_store(item_or_fluid_name) then
     return 0
   end
   local amount_stored, item_or_fluid_name = get_item_or_fluid_count(storage, item_or_fluid_name, temperature)
