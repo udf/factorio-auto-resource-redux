@@ -178,6 +178,7 @@ function GUIComponentItemPrioritySet.create(parent, priority_sets, set_key)
 
   update_buttons(table_elem, priority_sets)
   register_component(table_elem)
+  return main_flow
 end
 
 local function on_slider_input_changed(event, tags, player)

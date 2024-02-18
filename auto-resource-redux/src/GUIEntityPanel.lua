@@ -7,6 +7,7 @@ local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
 local GUICommon = require "src.GUICommon"
 local GUIComponentSliderInput = require "src.GUIComponentSliderInput"
 local GUIDispatcher = require "src.GUIDispatcher"
+local ItemPriorityManager = require "src.ItemPriorityManager"
 local Storage = require "src.Storage"
 
 local GUI_CLOSE_EVENT = "arr-entity-panel-close"
@@ -48,6 +49,26 @@ local function get_location_key(player, entity_name)
     entity_name,
     player.opened.name
   )
+end
+
+local function add_panel_frame(parent, caption, tooltip)
+  parent.add({
+    type = "line",
+    style = "control_behavior_window_line"
+  })
+  local frame = parent.add({
+    type = "frame",
+    style = "invisible_frame",
+    direction = "vertical"
+  })
+  local label = frame.add({
+    type = "label",
+    style = "heading_2_label",
+    caption = caption,
+    tooltip = tooltip
+  })
+  label.style.padding = { 4, 0, 4, 0 }
+  return frame
 end
 
 local function add_gui_content(window, entity)
@@ -150,28 +171,17 @@ local function add_gui_content(window, entity)
   })
 
   if entity.type == "furnace" then
-    frame.add({
-      type = "line",
-      style = "control_behavior_window_line"
-    })
-    local recipe_frame = frame.add({
-      type = "frame",
-      style = "invisible_frame",
-      direction = "vertical"
-    })
-    local recipe_label = recipe_frame.add({
-      type = "label",
-      style = "heading_2_label",
-      caption = { "", {"description.recipe"}, " [img=info]" },
-      tooltip = "The new recipe will be applied on the next production cycle, when the productivity bar is empty."
-    })
-    recipe_label.style.padding = {4, 0, 4, 0}
+    local sub_frame = add_panel_frame(
+      frame,
+      { "", { "description.recipe" }, " [img=info]" },
+      "The new recipe will be applied on the next production cycle, when the productivity bar is empty."
+    )
     local current_recipe = FurnaceRecipeManager.get_recipe(entity)
     local filters = {}
     for category, _ in pairs(entity.prototype.crafting_categories) do
       table.insert(filters, { filter = "category", category = category })
     end
-    recipe_frame.add({
+    sub_frame.add({
       type = "choose-elem-button",
       elem_type = "recipe",
       style = "slot_button_in_shallow_frame",
@@ -179,6 +189,43 @@ local function add_gui_content(window, entity)
       elem_filters = filters,
       tags = { id = data_id, event = FURNACE_RECIPE_EVENT }
     })
+  end
+
+  local priority_sets = ItemPriorityManager.get_priority_sets(entity)
+  -- { [group] = { set1_key, set2_key, ... } }
+  local related_priority_set_keys = {}
+  for set_key, priority_set in pairs(priority_sets) do
+    if priority_set.entity_name == entity.name then
+      local sets = related_priority_set_keys[priority_set.group] or {}
+      table.insert(sets, set_key)
+      related_priority_set_keys[priority_set.group] = sets
+    end
+  end
+  if table_size(related_priority_set_keys) > 0 then
+    local sub_frame = add_panel_frame(
+      frame,
+      "Item Priority [img=info]",
+      { "", ("Effects every [entity=%s] "):format(entity.name), entity.localised_name }
+    )
+    sub_frame.style.vertically_stretchable = false
+    local inner_flow = sub_frame.add({
+      type = "flow",
+      direction = "vertical"
+    })
+    inner_flow.style.left_margin = 4
+    for group, set_keys in pairs(related_priority_set_keys) do
+      inner_flow.add({
+        type = "label",
+        style = "heading_2_label",
+        caption = group,
+      })
+      for _, set_key in ipairs(set_keys) do
+        local flow = inner_flow.add({
+          type = "flow",
+        })
+        GUIComponentItemPrioritySet.create(flow, priority_sets, set_key)
+      end
+    end
   end
 end
 

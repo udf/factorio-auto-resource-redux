@@ -82,7 +82,7 @@ local function create_default_priority_sets()
       if burner_prototype ~= nil then
         local key = ItemPriorityManager.get_fuel_key(entity_name)
         local category = "fuel." .. table.concat(Util.table_keys(burner_prototype.fuel_categories), "+")
-        default_priority_sets[key] = create_subset(entity.is_building and "fuel" or "vehicle_fuel", category, entity_name)
+        default_priority_sets[key] = create_subset(entity.is_building and "Fuel" or "Vehicle Fuel", category, entity_name)
         for category, _ in pairs(burner_prototype.fuel_categories) do
           for fuel_item, fuel_value in pairs(fuels[category]) do
             local watts = entity.max_energy_usage * 60
@@ -98,11 +98,13 @@ local function create_default_priority_sets()
         for i, gun_prototype in ipairs(entity.indexed_guns) do
           local key = ItemPriorityManager.get_ammo_key(entity_name, i)
           local category = "ammo." .. table.concat(gun_prototype.attack_parameters.ammo_categories, "+")
-          default_priority_sets[key] = create_subset("ammo", category, entity_name, gun_prototype.name)
+          default_priority_sets[key] = create_subset("Ammo", category, entity_name, gun_prototype.name)
           for _, category in ipairs(gun_prototype.attack_parameters.ammo_categories) do
             for _, ammo_item in ipairs(ammunitions[category]) do
-              default_priority_sets[key].item_counts[ammo_item] = clamp_to_stack_size(ammo_item,
-                DEFAULT_VEHICLE_AMMO_AMOUNT)
+              default_priority_sets[key].item_counts[ammo_item] = clamp_to_stack_size(
+                ammo_item,
+                DEFAULT_VEHICLE_AMMO_AMOUNT
+              )
             end
           end
         end
