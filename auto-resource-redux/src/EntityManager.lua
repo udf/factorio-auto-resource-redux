@@ -97,11 +97,11 @@ function EntityManager.on_tick()
       local entity = global.entities[entity_id]
       if entity == nil or not entity.valid then
         LoopBuffer.remove_current(queue)
-      elseif not entity.to_be_deconstructed() then
+      else
         local entity_data = global.entity_data[entity_id] or {}
         local use_reserved = entity_data.use_reserved
         local storage = Storage.get_storage(entity)
-        local running = evaluate_condition(entity_data.condition, storage)
+        local running = not entity.to_be_deconstructed() and evaluate_condition(entity_data.condition, storage)
         local busy = spec.handler({
           entity = entity,
           storage = storage,
