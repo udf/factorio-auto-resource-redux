@@ -1,8 +1,10 @@
 local EntityManager = {}
 
 local EntityCondition = require "src.EntityCondition"
+local EntityCustomData = require "src.EntityCustomData"
 local EntityGroups = require "src.EntityGroups"
 local EntityHandlers = require "src.EntityHandlers"
+local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
 local LogisticManager = require "src.LogisticManager"
 local LoopBuffer = require "src.LoopBuffer"
 local Storage = require "src.Storage"
@@ -32,10 +34,6 @@ local function manage_entity(entity)
   global.entities[entity.unit_number] = entity
   LoopBuffer.add(global.entity_queues[queue_key], entity.unit_number)
   return queue_key
-end
-
-function EntityManager.can_manage(entity)
-  return EntityGroups.names_to_groups[entity.name] ~= nil
 end
 
 function EntityManager.reload_entities()
@@ -81,6 +79,13 @@ function EntityManager.initialise()
   end
 end
 
+local function on_entity_removed(entity)
+  if entity then
+    EntityCustomData.on_entity_removed(entity)
+    FurnaceRecipeManager.clear_marks(entity.unit_number)
+  end
+end
+
 local busy_counters = {}
 local evaluate_condition = EntityCondition.evaluate
 function EntityManager.on_tick()
@@ -96,6 +101,7 @@ function EntityManager.on_tick()
       local entity_id = LoopBuffer.next(queue)
       local entity = global.entities[entity_id]
       if entity == nil or not entity.valid then
+        on_entity_removed(entity)
         LoopBuffer.remove_current(queue)
       else
         local entity_data = global.entity_data[entity_id] or {}
@@ -160,6 +166,7 @@ end
 
 function EntityManager.on_entity_removed(event, died)
   local entity = event.entity
+  on_entity_removed(entity)
   if not EntityGroups.names_to_groups[entity.name] then
     return
   end

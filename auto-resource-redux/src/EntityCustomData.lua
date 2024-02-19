@@ -1,7 +1,7 @@
 EntityCustomData = {}
 local flib_table = require("__flib__/table")
 local EntityCondition = require "src.EntityCondition"
-local EntityManager = require "src.EntityManager"
+local EntityGroups = require "src.EntityGroups"
 local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
 local GUIDispatcher = require "src.GUIDispatcher"
 local GUIRequesterTank = require "src.GUIRequesterTank"
@@ -206,7 +206,7 @@ end
 local function on_copy_conditions(event, tags, player)
   local selected = player.selected
   local cursor = player.cursor_stack
-  if not selected or cursor.valid_for_read or not EntityManager.can_manage(selected) then
+  if not selected or cursor.valid_for_read or not EntityGroups.can_manage(selected) then
     return
   end
 
@@ -258,6 +258,10 @@ function EntityCustomData.set_use_reserved(entity, use_reserved)
     global.entity_data[entity.unit_number] = {}
   end
   global.entity_data[entity.unit_number].use_reserved = use_reserved
+end
+
+function EntityCustomData.on_entity_removed(entity)
+  global.entity_data[entity.unit_number] = nil
 end
 
 GUIDispatcher.register(GUIDispatcher.ON_COPY_SETTINGS_KEYPRESS, nil, on_copy)

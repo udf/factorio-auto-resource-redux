@@ -2,7 +2,7 @@ local GUIEntityPanel = {}
 
 local flib_table = require("__flib__/table")
 local EntityCondition = require "src.EntityCondition"
-local EntityManager = require "src.EntityManager"
+local EntityGroups = require "src.EntityGroups"
 local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
 local GUICommon = require "src.GUICommon"
 local GUIComponentSliderInput = require "src.GUIComponentSliderInput"
@@ -247,7 +247,7 @@ end
 local function on_gui_opened(event, tags, player)
   local last_position = close_gui(player)
   local entity = event.entity
-  if not entity or not EntityManager.can_manage(entity) then
+  if not entity or not EntityGroups.can_manage(entity) then
     return
   end
 

@@ -29,6 +29,10 @@ function EntityGroups.calculate_groups()
   end
 end
 
+function EntityGroups.can_manage(entity)
+  return EntityGroups.names_to_groups[entity.name] ~= nil
+end
+
 function EntityGroups.initialise()
   EntityGroups.calculate_groups()
 end
