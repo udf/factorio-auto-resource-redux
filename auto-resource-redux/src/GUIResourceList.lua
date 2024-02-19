@@ -59,7 +59,6 @@ end
 
 GUICommon.get_or_create_reslist_button = GUIResourceList.get_or_create_button
 
--- TODO: ctrl-right click to go to last pickup location?
 local function update_gui(player)
   local storage = Storage.get_storage(player)
 
