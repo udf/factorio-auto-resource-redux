@@ -7,13 +7,13 @@ local TICKS_PER_LOGISTIC_UPDATE = 90
 local TICKS_PER_ALERT_UPDATE = 60 * 2
 local TICKS_PER_ALERT_TRANSFER = 60 * 10
 
-local function handle_requests(storage, entity, inventory, ammo_inventory, extra_stack)
+local function handle_requests(o, inventory, ammo_inventory, extra_stack)
   local inventory_items = inventory.get_contents()
   local ammo_items = ammo_inventory and ammo_inventory.get_contents() or {}
   local total_inserted = 0
   extra_stack = extra_stack or {}
-  for i = 1, entity.request_slot_count do
-    local request = entity.get_request_slot(i)
+  for i = 1, o.entity.request_slot_count do
+    local request = o.entity.get_request_slot(i)
     if request and request.count > 0 then
       local item_name = request.name
       local amount_needed = (
@@ -25,17 +25,17 @@ local function handle_requests(storage, entity, inventory, ammo_inventory, extra
       if amount_needed > 0 then
         if ammo_inventory and ammo_inventory.can_insert(request) then
           local inserted = Storage.put_in_inventory(
-            storage, item_name,
+            o.storage, item_name,
             ammo_inventory, amount_needed,
-            true
+            use_reserved
           )
           amount_needed = amount_needed - inserted
           total_inserted = total_inserted + inserted
         end
         total_inserted = total_inserted + Storage.put_in_inventory(
-          storage, item_name,
+          o.storage, item_name,
           inventory, amount_needed,
-          true
+          use_reserved
         )
       end
     end
@@ -67,7 +67,16 @@ local function handle_player_logistics(player)
   if player.cursor_stack and player.cursor_stack.count > 0 then
     cursor_stack = { [player.cursor_stack.name] = player.cursor_stack.count }
   end
-  handle_requests(storage, player.character, inventory, ammo_inventory, cursor_stack)
+  handle_requests(
+    {
+      storage = storage,
+      entity = player.character,
+      use_reserved = true
+    },
+    inventory,
+    ammo_inventory,
+    cursor_stack
+  )
 end
 
 local function get_entity_key(entity)
@@ -183,7 +192,7 @@ function LogisticManager.handle_requester_chest(o)
     return false
   end
   local inventory = o.entity.get_inventory(defines.inventory.chest)
-  return handle_requests(o.storage, o.entity, inventory)
+  return handle_requests(o, inventory)
 end
 
 function LogisticManager.initialise()
