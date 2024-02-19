@@ -386,7 +386,8 @@ local function on_furnace_recipe_changed(event, tags, player)
   local new_recipe_name = event.element.elem_value
   local entity = global.entities[event.element.tags.id]
   if not new_recipe_name then
-    event.element.elem_value = FurnaceRecipeManager.get_recipe(entity).name
+    local recipe = FurnaceRecipeManager.get_recipe(entity)
+    event.element.elem_value = recipe and recipe.name
     return
   end
   FurnaceRecipeManager.set_recipe(entity, new_recipe_name)
