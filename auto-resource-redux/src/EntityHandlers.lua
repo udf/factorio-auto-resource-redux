@@ -104,15 +104,19 @@ local function insert_using_priority_set(
 
   -- insert first usable item
   for item_name, wanted_amount in pairs(usable_items) do
-    local stored_amount = o.storage.items[item_name] or 0
     if wanted_amount <= 0 then
       goto continue
     end
-    if stored_amount > 0 then
+    local available_amount = Storage.get_available_item_count(
+      o.storage,
+      item_name, wanted_amount,
+      use_reserved
+    )
+    if available_amount > 0 then
       if item_name == current_item then
-        stored_amount = stored_amount + current_count
+        available_amount = available_amount + current_count
       end
-      local new_satisfaction = math.min(1, stored_amount / wanted_amount)
+      local new_satisfaction = math.min(1, available_amount / wanted_amount)
 
       if new_satisfaction >= current_satisfaction then
         local amount_added = Storage.add_to_or_replace_stack(
