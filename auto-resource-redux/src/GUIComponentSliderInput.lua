@@ -36,7 +36,7 @@ local function scale_array(array, scale, min, max)
   for i, val in ipairs(array) do
     table.insert(
       out,
-      Util.clamp(val * scale, min or -math.huge, max or math.huge)
+      Util.clamp(math.ceil(val * scale), min or -math.huge, max or math.huge)
     )
   end
   return out
