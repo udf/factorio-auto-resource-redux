@@ -69,7 +69,7 @@ local function create_default_priority_sets()
       if attack_parameters.ammo_categories ~= nil then
         local key = ItemPriorityManager.get_ammo_key(entity_name, 1)
         local category = "ammo." .. table.concat(attack_parameters.ammo_categories, "+")
-        default_priority_sets[key] = create_subset("ammo", category, entity_name)
+        default_priority_sets[key] = create_subset("Ammo", category, entity_name)
         for _, category in ipairs(attack_parameters.ammo_categories) do
           for _, ammo_item in ipairs(ammunitions[category]) do
             default_priority_sets[key].item_counts[ammo_item] = entity.automated_ammo_count
