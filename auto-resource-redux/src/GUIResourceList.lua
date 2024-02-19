@@ -82,7 +82,7 @@ local function update_gui(player)
     local quantity = min or count
     local item_limit = Storage.get_item_limit(storage, storage_key) or 0
     local reserved = Storage.get_item_reservation(storage, storage_key)
-    local is_red = quantity / item_limit < 0.01 or quantity <= reserved
+    local is_red = quantity <= (reserved > 0 and reserved or item_limit * 0.01)
     local tooltip = {
       "", R.FONT_BOLD, R.COLOUR_LABEL,
       fluid_name and { "fluid-name." .. fluid_name } or game.item_prototypes[storage_key].localised_name,
