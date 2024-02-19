@@ -308,10 +308,15 @@ function Storage.add_to_or_replace_stack(storage, item_name, stack, target_count
   local stack_count = stack.count
   if stack_count > 0 and stack.name ~= item_name then
     local amount_removed = add_item_or_fluid(storage, stack.name, stack_count, ignore_limit)
-    if amount_removed < stack_count then
+    stack_count = stack_count - amount_removed
+    if stack_count > 0 and amount_removed > 0 then
+      stack.set_stack({ name = stack.name, count = stack_count })
+    elseif stack_count == 0 then
+      stack.clear()
+    end
+    if stack_count > 0 then
       return 0
     end
-    stack_count = 0
   end
   local amount_to_add = target_count - stack_count
   if amount_to_add <= 0 then
