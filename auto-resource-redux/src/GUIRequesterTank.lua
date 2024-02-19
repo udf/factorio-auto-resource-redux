@@ -222,7 +222,7 @@ end
 
 local function on_fluid_changed(event, tags, player)
   local fluid = event.element.elem_value
-  local default_temp = fluid and game.fluid_prototypes[fluid] or nil
+  local default_temp = fluid and game.fluid_prototypes[fluid].default_temperature or nil
   local data = global.entity_data[tags.id]
   global.entity_data[tags.id] = {
     fluid = fluid,
