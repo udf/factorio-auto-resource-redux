@@ -10,7 +10,7 @@ function EntityCondition.evaluate(condition, storage)
     return true
   end
   local storage_key = condition.item
-  local amount_stored = storage.items[storage_key]
+  local amount_stored = storage.items[storage_key] or 0
   if type(amount_stored) == "table" then
     amount_stored = Util.table_min_val(amount_stored)
   end
