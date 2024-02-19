@@ -4,38 +4,54 @@ function FurnaceRecipeManager.get_recipe_label(recipe)
   return ("[recipe=%s] %s (%s)"):format(recipe.name, recipe.name, recipe.category)
 end
 
-function FurnaceRecipeManager.clear_pending_recipe(entity)
-  local id = entity.unit_number
-  local recipe_data = global.furnace_recipes[id]
-  if recipe_data then
-    for _, mark_id in ipairs(recipe_data.marks) do
-      rendering.destroy(mark_id)
-    end
+local function store_furnace_recipe(entity_id, recipe)
+  if global.entity_data[entity_id] == nil then
+    global.entity_data[entity_id] = {}
   end
+  global.entity_data[entity_id].furnace_recipe = recipe and recipe.name
+end
 
-  global.furnace_recipes[id] = nil
+local function read_stored_furnace_recipe(entity_id)
+  local data = global.entity_data[entity_id]
+  if data == nil then
+    return nil
+  end
+  return game.recipe_prototypes[data.furnace_recipe]
+end
+
+function FurnaceRecipeManager.clear_marks(entity_id)
+  for _, mark_id in ipairs(global.furnace_marks[entity_id] or {}) do
+    rendering.destroy(mark_id)
+  end
+  global.furnace_marks[entity_id] = nil
+end
+
+function FurnaceRecipeManager.clear_pending_recipe(entity)
+  store_furnace_recipe(entity.unit_number, nil)
+  FurnaceRecipeManager.clear_marks(entity.unit_number)
 end
 
 function FurnaceRecipeManager.get_recipe(entity)
   local current_recipe = entity.get_recipe() or entity.previous_recipe
-  local recipe_data = global.furnace_recipes[entity.unit_number]
-  if not recipe_data or not recipe_data.recipe.valid then
+  local stored_recipe = read_stored_furnace_recipe(entity.unit_number)
+  if not stored_recipe then
+    store_furnace_recipe(entity.unit_number, current_recipe)
     return current_recipe
   end
-  return recipe_data.recipe
+  return stored_recipe
 end
 
 function FurnaceRecipeManager.get_new_recipe(entity)
   local current_recipe = entity.get_recipe() or entity.previous_recipe
-  local recipe_data = global.furnace_recipes[entity.unit_number]
-  if not recipe_data then
+  local target_recipe = read_stored_furnace_recipe(entity.unit_number)
+  if not target_recipe then
+    store_furnace_recipe(entity.unit_number, current_recipe)
     return current_recipe, false
   end
 
-  local target_recipe = recipe_data.recipe
-  -- can no longer switch, or successfully switched
-  if not target_recipe.valid or (current_recipe and current_recipe.name == target_recipe.name) then
-    FurnaceRecipeManager.clear_pending_recipe(entity)
+  -- successfully switched
+  if current_recipe and current_recipe.name == target_recipe.name then
+    FurnaceRecipeManager.clear_marks(entity.unit_number)
     return current_recipe, false
   end
 
@@ -51,10 +67,13 @@ function FurnaceRecipeManager.get_new_recipe(entity)
   return current_recipe, false
 end
 
-function FurnaceRecipeManager.set_recipe(entity, recipe)
-  if global.furnace_recipes[entity.unit_number] then
-    FurnaceRecipeManager.clear_pending_recipe(entity)
+function FurnaceRecipeManager.set_recipe(entity, recipe_name)
+  FurnaceRecipeManager.clear_marks(entity.unit_number)
+  local current_recipe = entity.get_recipe() or entity.previous_recipe
+  if current_recipe and current_recipe.name == recipe_name then
+    return
   end
+
   local offset = { 0, -1.1 }
   local bg = rendering.draw_sprite({
     sprite = "utility/entity_info_dark_background",
@@ -75,7 +94,7 @@ function FurnaceRecipeManager.set_recipe(entity, recipe)
     only_in_alt_mode = true,
   })
   local recipe_icon = rendering.draw_sprite({
-    sprite = "recipe/" .. recipe.name,
+    sprite = "recipe/" .. recipe_name,
     render_layer = "selection-box",
     target = entity,
     target_offset = offset,
@@ -84,15 +103,15 @@ function FurnaceRecipeManager.set_recipe(entity, recipe)
     only_in_alt_mode = true,
   })
 
-  global.furnace_recipes[entity.unit_number] = {
-    recipe = recipe,
-    marks = { bg, arrows, recipe_icon }
-  }
+  if entity.type ~= "entity-ghost" then
+    store_furnace_recipe(entity.unit_number, { name = recipe_name })
+  end
+  global.furnace_marks[entity.unit_number] = { bg, arrows, recipe_icon }
 end
 
 function FurnaceRecipeManager.initialise()
-  if global.furnace_recipes == nil then
-    global.furnace_recipes = {}
+  if global.furnace_marks == nil then
+    global.furnace_marks = {}
   end
 end
 

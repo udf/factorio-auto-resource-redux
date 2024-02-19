@@ -389,7 +389,7 @@ local function on_furnace_recipe_changed(event, tags, player)
     event.element.elem_value = FurnaceRecipeManager.get_recipe(entity).name
     return
   end
-  FurnaceRecipeManager.set_recipe(entity, game.recipe_prototypes[new_recipe_name])
+  FurnaceRecipeManager.set_recipe(entity, new_recipe_name)
 end
 
 GUIDispatcher.register(defines.events.on_gui_click, GUI_CLOSE_EVENT, on_gui_closed)

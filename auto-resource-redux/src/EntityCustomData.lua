@@ -75,7 +75,7 @@ function EntityCustomData.on_built(event)
     local new_tags = entity.tags
     new_tags._name = nil
 
-    -- look for entity to assign tags to
+    -- look for entity to assign data to
     local found_entities = entity.surface.find_entities_filtered({
       area = search_area,
       name = target_name,
@@ -83,7 +83,7 @@ function EntityCustomData.on_built(event)
     })
     if #found_entities > 0 then
       local found_entity = found_entities[1]
-      global.entity_data[found_entity.unit_number] = new_tags
+      EntityCustomData.set_data(found_entity, new_tags)
       entity.destroy()
       return
     end
@@ -96,6 +96,10 @@ function EntityCustomData.on_built(event)
     })
     if #found_entities > 0 then
       local found_entity = found_entities[1]
+      -- mark furnace ghosts
+      if new_tags.furnace_recipe then
+        FurnaceRecipeManager.set_recipe(found_entity, new_tags.furnace_recipe)
+      end
       -- store tags in a separate attribute to not change other tags
       new_tags = { [DATA_TAG] = new_tags }
       found_entity.tags = new_tags
@@ -114,8 +118,20 @@ function EntityCustomData.on_built(event)
 
   -- use data from tags when a ghost is built
   if event.tags then
-    local entity_data = event.tags[DATA_TAG]
-    global.entity_data[entity.unit_number] = entity_data
+    EntityCustomData.set_data(entity, event.tags[DATA_TAG])
+  end
+end
+
+function EntityCustomData.set_data(entity_or_ghost, new_data)
+  if entity_or_ghost.type == "entity-ghost" then
+    local tags = entity_or_ghost.tags or {}
+    tags[DATA_TAG] = new_data
+    entity_or_ghost.tags = tags
+    return
+  end
+  global.entity_data[entity_or_ghost.unit_number] = new_data
+  if new_data and new_data.furnace_recipe then
+    FurnaceRecipeManager.set_recipe(entity_or_ghost, new_data.furnace_recipe)
   end
 end
 
@@ -144,7 +160,7 @@ local function get_condition_label(data)
   return table.concat(label)
 end
 
-local function copy_entity_data(player, entity, tool_name, tool_label, extra_data, add_suffix)
+local function copy_entity_data(player, entity, tool_name, tool_label, add_suffix)
   local cursor = player.cursor_stack
   local selected_data = global.entity_data[player.selected.unit_number] or {}
   if cursor.set_stack({ name = tool_name, count = 1 }) then
@@ -158,7 +174,6 @@ local function copy_entity_data(player, entity, tool_name, tool_label, extra_dat
   global.entity_data_clipboard[player.index] = {
     name = entity.name,
     type = entity.type,
-    extra_data = extra_data,
     data = flib_table.deep_copy(selected_data),
   }
 end
@@ -171,7 +186,7 @@ local function on_copy(event, tags, player)
   end
 
   local selected_data = global.entity_data[selected.unit_number] or {}
-  local tool_name, label, extra_data
+  local tool_name, label
   if selected.name == "arr-requester-tank" then
     tool_name = "arr-paste-tool-requester-tank"
     label = GUIRequesterTank.get_paste_label(selected_data)
@@ -180,12 +195,11 @@ local function on_copy(event, tags, player)
     if recipe then
       tool_name = "arr-paste-tool-furnace-" .. recipe.category
       label = FurnaceRecipeManager.get_recipe_label(recipe)
-      extra_data = recipe
     end
   end
 
   if tool_name then
-    copy_entity_data(player, selected, tool_name, label, extra_data, true)
+    copy_entity_data(player, selected, tool_name, label, true)
   end
 end
 
@@ -202,12 +216,11 @@ local function on_copy_conditions(event, tags, player)
 end
 
 function EntityCustomData.on_player_selected_area(event)
+  local set_data = EntityCustomData.set_data
   local src = global.entity_data_clipboard[event.player_index]
   if event.item == "arr-paste-tool-requester-tank" then
     for _, entity in ipairs(event.entities) do
-      if entity.name == src.name then
-        global.entity_data[entity.unit_number] = flib_table.deep_copy(src.data)
-      end
+      set_data(entity, flib_table.deep_copy(src.data))
     end
     return
   end
@@ -215,20 +228,17 @@ function EntityCustomData.on_player_selected_area(event)
   local furnace_tool_category = event.item:match("arr%-paste%-tool%-furnace%-(.+)")
   if furnace_tool_category then
     for _, entity in ipairs(event.entities) do
-      FurnaceRecipeManager.set_recipe(entity, src.extra_data)
+      set_data(entity, flib_table.deep_copy(src.data))
     end
   end
 
   if furnace_tool_category or event.item == "arr-paste-tool-condition" then
     local src_data = src.data or {}
     for _, entity in ipairs(event.entities) do
-      local entity_data = global.entity_data[entity.unit_number]
-      if entity_data == nil then
-        entity_data = {}
-        global.entity_data[entity.unit_number] = entity_data
-      end
+      local entity_data = global.entity_data[entity.unit_number] or {}
       entity_data.use_reserved = src_data.use_reserved
       entity_data.condition = flib_table.deep_copy(src_data.condition)
+      set_data(entity, entity_data)
     end
     return
   end
