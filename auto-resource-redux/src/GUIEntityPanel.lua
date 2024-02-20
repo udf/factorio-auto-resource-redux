@@ -213,12 +213,14 @@ local function add_gui_content(window, entity)
       direction = "vertical"
     })
     inner_flow.style.left_margin = 4
+    inner_flow.style.vertical_spacing = 0
     for group, set_keys in pairs(related_priority_set_keys) do
-      inner_flow.add({
+      local label = inner_flow.add({
         type = "label",
         style = "heading_2_label",
         caption = group,
       })
+      label.style.bottom_padding = 0
       for _, set_key in ipairs(set_keys) do
         local flow = inner_flow.add({
           type = "flow",
