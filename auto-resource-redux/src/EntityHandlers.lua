@@ -170,6 +170,9 @@ function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
     return false
   end
   -- check if we should craft
+  if entity.is_crafting() and (1 - entity.crafting_progress) * (recipe.energy / entity.crafting_speed) > TARGET_INGREDIENT_CRAFT_TIME then
+    return false
+  end
   local has_empty_slot = false
   for _, item in ipairs(recipe.products) do
     local amount_produced = item.amount or item.amount_max
