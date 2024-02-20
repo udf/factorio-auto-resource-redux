@@ -260,8 +260,16 @@ function EntityCustomData.set_use_reserved(entity, use_reserved)
   global.entity_data[entity.unit_number].use_reserved = use_reserved
 end
 
-function EntityCustomData.on_entity_removed(entity)
-  global.entity_data[entity.unit_number] = nil
+function EntityCustomData.on_entity_removed(entity_id)
+  global.entity_data[entity_id] = nil
+end
+
+function EntityCustomData.migrate_data(old_id, new_id)
+  local data = global.entity_data[old_id]
+  if data then
+    global.entity_data[new_id] = data
+    global.entity_data[old_id] = nil
+  end
 end
 
 GUIDispatcher.register(GUIDispatcher.ON_COPY_SETTINGS_KEYPRESS, nil, on_copy)

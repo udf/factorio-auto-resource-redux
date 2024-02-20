@@ -9,6 +9,7 @@ local DEFAULT_VEHICLE_AMMO_AMOUNT = 10
 local FUEL_BURN_SECONDS_TARGET = 60
 
 local default_priority_sets = {}
+local entity_name_mapping = {}
 ItemPriorityManager.item_names = {}
 
 local function get_new_priority_sets(domain_key)
@@ -30,11 +31,11 @@ local function create_subset(group, category, entity_name, sub_item_name)
 end
 
 function ItemPriorityManager.get_fuel_key(entity_name)
-  return "fuel." .. entity_name
+  return "fuel." .. (entity_name_mapping[entity_name] or entity_name)
 end
 
 function ItemPriorityManager.get_ammo_key(entity_name, inv_slot_index)
-  return "ammo." .. entity_name .. "." .. inv_slot_index
+  return "ammo." .. (entity_name_mapping[entity_name] or entity_name) .. "." .. inv_slot_index
 end
 
 local function clamp_to_stack_size(item_name, count)
@@ -43,6 +44,14 @@ local function clamp_to_stack_size(item_name, count)
 end
 
 local function create_default_priority_sets()
+  -- map AAI vehicles to their original names
+  for entity_name, entity in pairs(game.entity_prototypes) do
+    local original_name = entity_name:match("(.+)%-_%-solid") or entity_name:match("(.+)%-_%-ghost")
+    if original_name then
+      entity_name_mapping[entity_name] = original_name
+    end
+  end
+
   local fuels = {}
   local ammunitions = {}
   for category, _ in pairs(game.ammo_category_prototypes) do
@@ -63,7 +72,7 @@ local function create_default_priority_sets()
   end
 
   for entity_name, entity in pairs(game.entity_prototypes) do
-    if EntityGroups.names_to_groups[entity.name] ~= nil then
+    if EntityGroups.names_to_groups[entity.name] ~= nil and entity_name_mapping[entity_name] == nil then
       local attack_parameters = entity.attack_parameters or {}
       -- ammo for turrets
       if attack_parameters.ammo_categories ~= nil then
@@ -166,6 +175,19 @@ end
 
 function ItemPriorityManager.get_priority_sets(entity)
   return ItemPriorityManager.get_priority_sets_for_domain(DomainStore.get_domain_key(entity))
+end
+
+function ItemPriorityManager.get_priority_sets_for_entity(entity)
+  local priority_sets = ItemPriorityManager.get_priority_sets_for_domain(DomainStore.get_domain_key(entity))
+  local filtered_sets = {}
+  for set_key, priority_set in pairs(priority_sets) do
+    local entity_name = entity_name_mapping[priority_set.entity_name] or priority_set.entity_name
+    if entity_name == entity.name then
+      filtered_sets[set_key] = priority_set
+    end
+  end
+  filtered_sets.domain_key = priority_sets.domain_key
+  return filtered_sets
 end
 
 function ItemPriorityManager.get_priority_sets_for_domain(domain_key)

@@ -73,6 +73,9 @@ script.on_event(defines.events.on_robot_mined_entity, EntityManager.on_entity_re
 script.on_event(defines.events.script_raised_destroy, EntityManager.on_entity_removed)
 script.on_event(defines.events.on_entity_died, EntityManager.on_entity_died)
 
+-- custom
+remote.add_interface("auto-resource-redux", { on_entity_replaced = EntityManager.on_entity_replaced })
+
 -- gui
 script.on_event(defines.events.on_gui_click, GUIDispatcher.on_event)
 script.on_event(defines.events.on_gui_closed, GUIDispatcher.on_event)

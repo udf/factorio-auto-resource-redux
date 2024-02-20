@@ -191,11 +191,11 @@ local function add_gui_content(window, entity)
     })
   end
 
-  local priority_sets = ItemPriorityManager.get_priority_sets(entity)
+  local priority_sets = ItemPriorityManager.get_priority_sets_for_entity(entity)
   -- { [group] = { set1_key, set2_key, ... } }
   local related_priority_set_keys = {}
   for set_key, priority_set in pairs(priority_sets) do
-    if priority_set.entity_name == entity.name then
+    if priority_set.group then
       local sets = related_priority_set_keys[priority_set.group] or {}
       table.insert(sets, set_key)
       related_priority_set_keys[priority_set.group] = sets

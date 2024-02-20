@@ -79,11 +79,9 @@ function EntityManager.initialise()
   end
 end
 
-local function on_entity_removed(entity)
-  if entity then
-    EntityCustomData.on_entity_removed(entity)
-    FurnaceRecipeManager.clear_marks(entity.unit_number)
-  end
+local function on_entity_removed(entity_id)
+  EntityCustomData.on_entity_removed(entity_id)
+  FurnaceRecipeManager.clear_marks(entity_id)
 end
 
 local busy_counters = {}
@@ -101,7 +99,7 @@ function EntityManager.on_tick()
       local entity_id = LoopBuffer.next(queue)
       local entity = global.entities[entity_id]
       if entity == nil or not entity.valid then
-        on_entity_removed(entity)
+        on_entity_removed(entity_id)
         LoopBuffer.remove_current(queue)
       else
         local entity_data = global.entity_data[entity_id] or {}
@@ -166,8 +164,10 @@ end
 
 function EntityManager.on_entity_removed(event, died)
   local entity = event.entity
-  on_entity_removed(entity)
-  if not EntityGroups.names_to_groups[entity.name] then
+  if entity.unit_number then
+    on_entity_removed(entity.unit_number)
+  end
+  if not EntityGroups.can_manage(entity) then
     return
   end
   if not died and #entity.fluidbox > 0 then
@@ -192,6 +192,11 @@ end
 
 function EntityManager.on_entity_died(event)
   EntityManager.on_entity_removed(event, true)
+end
+
+function EntityManager.on_entity_replaced(data)
+  EntityCustomData.migrate_data(data.old_entity_unit_number, data.new_entity_unit_number)
+  manage_entity(data.new_entity)
 end
 
 return EntityManager
