@@ -246,7 +246,7 @@ function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
       end
     end
   end
-  inserted = inserted or insert_fluids(o, fluid_targets, 0)
+  inserted = insert_fluids(o, fluid_targets, 0) or inserted
   return inserted
 end
 
@@ -255,9 +255,9 @@ function EntityHandlers.handle_furnace(o)
   local busy = false
   if recipe then
     if not o.paused then
-      busy = busy or insert_fuel(o, false)
+      busy = insert_fuel(o, false) or busy
     end
-    busy = busy or EntityHandlers.handle_assembler(o, recipe, switched)
+    busy = EntityHandlers.handle_assembler(o, recipe, switched) or busy
   end
   return busy
 end
@@ -321,11 +321,11 @@ function EntityHandlers.handle_car(o)
   local ammo_inventory = o.entity.get_inventory(defines.inventory.car_ammo)
   if ammo_inventory then
     for i = 1, #ammo_inventory do
-      busy = busy or insert_using_priority_set(
+      busy = insert_using_priority_set(
         o, ItemPriorityManager.get_ammo_key(o.entity.name, i),
         ammo_inventory[i], ammo_inventory.get_filter(i),
         true
-      )
+      ) or busy
     end
   end
   return busy
