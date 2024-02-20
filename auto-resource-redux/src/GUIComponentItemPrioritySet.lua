@@ -44,7 +44,8 @@ local function update_slider(slider_flow, priority_sets, set_key)
       tags = { event = { [SLIDER_INPUT_EVENT] = true } }
     }
   )
-  slider_flow.slider.style.size = { 194, 12 }
+  slider_flow.slider.style.height = 12
+  slider_flow.slider.style.minimal_width = 156
 end
 
 local function update_buttons(table_elem, priority_sets)
@@ -154,6 +155,7 @@ function GUIComponentItemPrioritySet.create(parent, priority_sets, set_key)
     name = "table_frame",
     style = "arr_deep_frame",
   })
+  table_frame.style.maximal_width = 400
   local component_key = get_component_key(priority_sets.domain_key, set_key)
   local table_elem = table_frame.add({
     type = "table",

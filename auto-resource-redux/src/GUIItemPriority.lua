@@ -70,15 +70,15 @@ local function add_tab_contents(tabbed_pane, priority_sets)
       type = "scroll-pane",
       direction = "vertical",
       vertical_scroll_policy = "always",
+      horizontal_scroll_policy = "never",
       style = "logistic_gui_scroll_pane"
     })
     scroll_pane.style.vertically_stretchable = true
-    scroll_pane.style.minimal_width = 404
-    scroll_pane.style.minimal_height = 400
-    scroll_pane.style.maximal_height = 600
-    scroll_pane.style.top_padding = 8
+    scroll_pane.style.horizontally_stretchable = true
+    scroll_pane.style.extra_right_padding_when_activated = 2
     scroll_pane.style.left_padding = -2
-    scroll_pane.style.right_padding = 8
+    scroll_pane.style.right_padding = -2
+    scroll_pane.style.bottom_margin = -4
     local content_table = scroll_pane.add({
       type = "table",
       column_count = 2,
