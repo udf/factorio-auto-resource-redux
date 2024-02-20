@@ -204,6 +204,10 @@ function ItemPriorityManager.initialise()
         ("Removing unknown key from priority set %s:%s:%%s"):format(domain_name, set_key),
         ("Adding new key to priority set %s:%s:%%s"):format(domain_name, set_key)
       )
+      -- copy info keys
+      priority_set.category = default_priority_set.category
+      priority_set.entity_name = default_priority_set.entity_name
+      priority_set.group = default_priority_set.group
       -- update items in this set
       add_new_items_to_dict(
         priority_set.item_counts,
