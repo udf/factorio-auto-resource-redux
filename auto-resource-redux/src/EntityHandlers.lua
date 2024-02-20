@@ -153,17 +153,18 @@ local function insert_fuel(o, default_use_reserved)
 end
 
 function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
-  local recipe = override_recipe or o.entity.get_recipe()
+  local entity, storage = o.entity, o.storage
+  local recipe = override_recipe or entity.get_recipe()
   if recipe == nil then
     return false
   end
 
   -- always try to pick up outputs
-  local output_inventory = o.entity.get_inventory(defines.inventory.assembling_machine_output)
-  local _, remaining_items = Storage.add_from_inventory(o.storage, output_inventory, false)
+  local output_inventory = entity.get_inventory(defines.inventory.assembling_machine_output)
+  local _, remaining_items = Storage.add_from_inventory(storage, output_inventory, false)
   -- TODO: we're storing all fluids here, so a recipe that has the same input and output fluid
   -- might get stuck as the output will be stored first
-  Util.dictionary_merge(remaining_items, store_fluids(o.storage, o.entity))
+  Util.dictionary_merge(remaining_items, store_fluids(storage, entity))
 
   if o.paused then
     return false
@@ -190,15 +191,15 @@ function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
     return false
   end
 
-  local crafts_per_second = o.entity.crafting_speed / recipe.energy
+  local crafts_per_second = entity.crafting_speed / recipe.energy
   local ingredient_multiplier = math.max(1, math.ceil(TARGET_INGREDIENT_CRAFT_TIME * crafts_per_second))
-  local input_inventory = o.entity.get_inventory(defines.inventory.assembling_machine_input)
+  local input_inventory = entity.get_inventory(defines.inventory.assembling_machine_input)
   if clear_inputs then
-    Storage.add_from_inventory(o.storage, input_inventory, true)
-    store_fluids(o.storage, o.entity, nil, true)
+    Storage.add_from_inventory(storage, input_inventory, true)
+    store_fluids(storage, entity, nil, true)
   end
   local input_items = input_inventory.get_contents()
-  for i, fluid, filter, proto in Util.iter_fluidboxes(o.entity, "^", false) do
+  for i, fluid, filter, proto in Util.iter_fluidboxes(entity, "^", false) do
     if proto.production_type ~= "output" then
       local storage_key = Storage.get_fluid_storage_key(fluid.name)
       input_items[storage_key] = math.floor(fluid.amount)
@@ -210,7 +211,7 @@ function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
     if ingredient.type == "fluid" then
       storage_key = Storage.get_fluid_storage_key(ingredient.name)
       storage_amount = Storage.count_available_fluid_in_temperature_range(
-        o.storage,
+        storage,
         storage_key,
         ingredient.minimum_temperature,
         ingredient.maximum_temperature,
@@ -219,7 +220,7 @@ function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
     else
       storage_key = ingredient.name
       storage_amount = Storage.get_available_item_count(
-        o.storage, storage_key,
+        storage, storage_key,
         ingredient.amount * ingredient_multiplier, o.use_reserved
       )
     end
@@ -238,7 +239,7 @@ function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
       local amount_needed = target_amount - (input_items[ingredient.name] or 0)
       if amount_needed > 0 then
         local amount_inserted = Storage.put_in_inventory(
-          o.storage, ingredient.name,
+          storage, ingredient.name,
           input_inventory, amount_needed,
           o.use_reserved
         )
