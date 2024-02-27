@@ -69,7 +69,6 @@ local function update_gui(player)
   end
 
   for storage_key, count in pairs(storage.items) do
-    -- local button = table_elem[storage_key]
     local button = GUIResourceList.get_or_create_button(player, storage_key)
     local fluid_name = Storage.unpack_fluid_item_name(storage_key)
 

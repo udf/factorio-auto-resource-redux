@@ -1,0 +1,1 @@
+auto-resource-redux/README.md
