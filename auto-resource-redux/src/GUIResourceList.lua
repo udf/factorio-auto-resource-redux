@@ -54,7 +54,7 @@ function GUIResourceList.get_or_create_button(player, storage_key)
       index = find_gui_index_for(table_elem, storage_keys_order, storage_key)
     }
   )
-  return button
+  return button, group_name
 end
 
 GUICommon.get_or_create_reslist_button = GUIResourceList.get_or_create_button
@@ -68,8 +68,10 @@ local function update_gui(player)
     old_table.destroy()
   end
 
+  local expected_buttons = {}
   for storage_key, count in pairs(storage.items) do
-    local button = GUIResourceList.get_or_create_button(player, storage_key)
+    local button, group_name = GUIResourceList.get_or_create_button(player, storage_key)
+    expected_buttons[group_name .. ";" .. button.name] = true
     local fluid_name = Storage.unpack_fluid_item_name(storage_key)
 
     local num_vals, sum, min, max
@@ -133,6 +135,17 @@ local function update_gui(player)
     button.number = quantity
     button.tooltip = tooltip
     button.style = is_red and "red_slot_button" or "slot_button"
+  end
+
+  -- remove unexpected buttons
+  local table_flow = gui_top[GUICommon.GUI_RESOURCE_TABLE]
+  for _, table_name in ipairs(table_flow.children_names) do
+    local table_elem = table_flow[table_name]
+    for _, button_name in ipairs(table_elem.children_names) do
+      if not expected_buttons[table_name .. ";" .. button_name] then
+        table_elem[button_name].destroy()
+      end
+    end
   end
 end
 
