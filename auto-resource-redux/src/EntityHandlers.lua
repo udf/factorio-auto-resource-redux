@@ -175,7 +175,6 @@ function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
   end
   local has_empty_slot = false
   for _, item in ipairs(recipe.products) do
-    local amount_produced = item.amount or item.amount_max
     local storage_key = item.name
     if item.type == "fluid" then
       storage_key = Storage.get_fluid_storage_key(item.name)
@@ -183,11 +182,6 @@ function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
 
     if remaining_items[storage_key] == nil then
       has_empty_slot = true
-    end
-
-    -- skip crafting if any slot contains 1x or more products
-    if (remaining_items[storage_key] or 0) >= amount_produced then
-      return false
     end
   end
   if not has_empty_slot then
