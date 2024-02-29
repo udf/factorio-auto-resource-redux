@@ -66,22 +66,23 @@ A UI containing all configurable items can also be accessed by clicking the gear
 
 ## Collection of mined resources
 Resources mined by a mining drill are placed into a hidden chest that is created when the mining drill is built - the mod collects items from this hidden chest:  
-(TODO: image of hidden chests alt-mode)
+![Mining drill hidden chests](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/miner-chest-alt-mode.png)
 
 Miners needing fluids (like uranium) are not handled automatically as there is no simple way to determine what fluid they need - you will have to manually request fluid using the "Requester Tank":  
-(TODO: image of mining uranium using requester chest)
+![Uranium mining](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/uranium-mining.jpg)
 
 Miners mining fluids (like pumpjacks) have an internal fluid storage, so nothing extra is needed for those.
 
 ## Fluid handling
-Fluids can be requested from storage using the "Requester Tank". It has a custom UI allowing you to choose the temperature and quantity of fluid to request:  
-(TODO: image of requester tank UI on steam)
+Fluids can be requested from storage using the "Requester Tank". It has a custom UI allowing you to choose the temperature and level of fluid to request:  
+![Requester tank GUI](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/requester-tank-steam.png)
 
 The fluid requester can be used for flamethrower turrets or even to power your outposts remotely:  
-(TODO: image of requester tank going into steam engines)
+![Requester tank powering an outpost](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/requester-tank-power.jpg)
 
-Fluids can be inserted into storage using the "Sink Tank", any fluid inserted into it will be transferred into your storage if there is space.  
-(TODO: image of water pump going into sink tank)
+Fluids can be inserted into storage using the "Sink Tank", any fluid inserted into it will be transferred into your storage if there is space. The steam for the outpost is provided this way:  
+![Sink tank collecting steam](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/sink-tank-steam.jpg)
+
 
 ## Logistics
 - Logistic and trash requests from players are automatically fulfilled.
