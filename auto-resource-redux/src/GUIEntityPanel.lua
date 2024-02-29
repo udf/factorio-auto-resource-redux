@@ -384,6 +384,13 @@ local function on_condition_value_changed(event, tags, player)
   global.entity_data[tags.id].condition.value = tonumber(new_value)
 end
 
+local function on_condition_value_confirmed(event, tags, player)
+  local condition_controls_flow = event.element.parent.parent.condition_controls_flow
+  local slider_flow = event.element.parent.parent.slider_flow
+  condition_controls_flow.condition_value.toggled = false
+  slider_flow.visible = false
+end
+
 local function on_furnace_recipe_changed(event, tags, player)
   local new_recipe_name = event.element.elem_value
   local entity = global.entities[event.element.tags.id]
@@ -407,6 +414,7 @@ GUIDispatcher.register(defines.events.on_gui_selection_state_changed, CONDITION_
 GUIDispatcher.register(defines.events.on_gui_click, CONDITION_VALUE_BUTTON_EVENT, on_condition_value_clicked)
 GUIDispatcher.register(defines.events.on_gui_value_changed, CONDITION_VALUE_CHANGED_EVENT, on_condition_value_changed)
 GUIDispatcher.register(defines.events.on_gui_text_changed, CONDITION_VALUE_CHANGED_EVENT, on_condition_value_changed)
+GUIDispatcher.register(defines.events.on_gui_confirmed, CONDITION_VALUE_CHANGED_EVENT, on_condition_value_confirmed)
 
 GUIDispatcher.register(defines.events.on_gui_elem_changed, FURNACE_RECIPE_EVENT, on_furnace_recipe_changed)
 
