@@ -211,7 +211,7 @@ local function on_copy_conditions(event, tags, player)
   end
 
   local selected_data = global.entity_data[selected.unit_number] or {}
-  local label = "Auto Resource:" .. get_condition_label(selected_data)
+  local label = "Auto Resource: " .. get_condition_label(selected_data)
   copy_entity_data(player, selected, "arr-paste-tool-condition", label)
 end
 
