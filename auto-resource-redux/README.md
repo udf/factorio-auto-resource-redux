@@ -15,7 +15,7 @@ An item can be removed from storage by clicking its corresponding button:
 
 To add an item, simply move it to the logistics trash in the inventory screen.
 
-**Middle-Click** an item to open the limit settings:
+**Middle-Click** an item to open the limit settings:  
 ![Limit dialogue](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/resource-limit.png)  
 A limit can be set to prevent producing too much of an item.  
 A reservation can be set to always keep some resources in storage.
@@ -38,7 +38,7 @@ A UI has been added to every entity that this mod manages:
 
 These settings will be stored in blueprints and can also be copied/pasted.  
 Additionally, you can copy and paste the settings by **Shift-Middle-Clicking** over an entity:  
-![Entity settings copy+paste](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/entity-settings-tool.mp4)
+![Entity settings copy+paste](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/entity-settings-tool.gif)
 
 Using these options it is possible to manage complex production chains, like cracking or Kovarex enrichment:
 
