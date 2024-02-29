@@ -37,8 +37,8 @@ A UI has been added to every entity that this mod manages:
 - **Enabled condition**: if set, items will only be inserted when the condition is met.
 
 These settings will be stored in blueprints and can also be copied/pasted.  
-Additionally, you can copy and paste the settings by **Shift-Middle-Clicking** over an entity whose that you want to copy:  
-(TODO: gif of settings copypasta)
+Additionally, you can copy and paste the settings by **Shift-Middle-Clicking** over an entity:  
+![Entity settings copy+paste](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/entity-settings-tool.mp4)
 
 Using these options it is possible to manage complex production chains, like cracking or Kovarex enrichment:
 
