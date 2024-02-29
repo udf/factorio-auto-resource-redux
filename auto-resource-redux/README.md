@@ -46,7 +46,7 @@ Using these options it is possible to manage complex production chains, like cra
 (TODO: image of cracking with entity panels shown)
 
 - Kovarex enrichment: reserve 40+ U-235 so that the enrichment machines always have access to enough to be able to run:  
-(TODO: image of Kovarex with entity panel and reserve menu shown)
+![Kovarex enrichment](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/kovarex-reservation.jpg)
 
 ## Furnaces
 - Furnace recipes can be set in the custom UI that opens next to the standard furnace UI.  
