@@ -130,7 +130,7 @@ local function add_gui_content(window, entity)
   condition_controls_flow.add({
     type = "drop-down",
     items = EntityCondition.OPERATIONS,
-    selected_index = flib_table.find(EntityCondition.OPERATIONS, condition.op) or 1,
+    selected_index = condition.op or 1,
     style = "circuit_condition_comparator_dropdown",
     tags = { id = data_id, event = CONDITION_OP_EVENT }
   })
