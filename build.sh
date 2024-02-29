@@ -4,7 +4,7 @@ SRCDIR=auto-resource-redux
 FILENAME="$(jq -r '.name + "_" + .version' $SRCDIR/info.json).zip"
 
 if [[ $(git status --porcelain=v1 "$SRCDIR" 2>/dev/null) ]]; then
-  echo "$SRCDIR has unstaged changes. Exiting."
+  echo "$SRCDIR has uncommited changes. Exiting."
   exit 1
 fi
 
