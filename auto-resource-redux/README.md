@@ -68,10 +68,10 @@ A UI containing all configurable items can also be accessed by clicking the gear
 Resources mined by a mining drill are placed into a hidden chest that is created when the mining drill is built - the mod collects items from this hidden chest:  
 ![Mining drill hidden chests](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/miner-chest-alt-mode.png)
 
+Miners mining fluids (like pumpjacks) have an internal fluid storage, so nothing extra is needed for those.
+
 Miners needing fluids (like uranium) are not handled automatically as there is no simple way to determine what fluid they need - you will have to manually request fluid using the "Requester Tank":  
 ![Uranium mining](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/uranium-mining.jpg)
-
-Miners mining fluids (like pumpjacks) have an internal fluid storage, so nothing extra is needed for those.
 
 ## Fluid handling
 Fluids can be requested from storage using the "Requester Tank". It has a custom UI allowing you to choose the temperature and level of fluid to request:  
@@ -80,7 +80,7 @@ Fluids can be requested from storage using the "Requester Tank". It has a custom
 The fluid requester can be used for flamethrower turrets or even to power your outposts remotely:  
 ![Requester tank powering an outpost](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/requester-tank-power.jpg)
 
-Fluids can be inserted into storage using the "Sink Tank", any fluid inserted into it will be transferred into your storage if there is space. The steam for the outpost is provided this way:  
+Fluids can be inserted into storage using the "Sink Tank", any fluid inserted into it will be transferred into your storage if there is space. The steam for the outpost above is provided this way:  
 ![Sink tank collecting steam](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/sink-tank-steam.jpg)
 
 
