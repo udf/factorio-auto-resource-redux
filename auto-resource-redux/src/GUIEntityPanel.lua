@@ -7,6 +7,7 @@ local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
 local GUICommon = require "src.GUICommon"
 local GUIComponentSliderInput = require "src.GUIComponentSliderInput"
 local GUIDispatcher = require "src.GUIDispatcher"
+local GUIItemPriority = require "src.GUIItemPriority"
 local ItemPriorityManager = require "src.ItemPriorityManager"
 local Storage = require "src.Storage"
 
@@ -17,6 +18,7 @@ local CONDITION_OP_EVENT = "arr-entity-panel-condition-op"
 local CONDITION_VALUE_BUTTON_EVENT = "arr-entity-panel-condition-button"
 local CONDITION_VALUE_CHANGED_EVENT = "arr-entity-panel-condition-value-changed"
 local FURNACE_RECIPE_EVENT = "arr-entity-panel-furnace-recipe"
+local SHOW_PRIORITY_GUI_EVENT = "arr-entity-panel-show-priority-gui"
 
 local EntityTypeGUIAnchors = {
   ["assembling-machine"] = defines.relative_gui_type.assembling_machine_gui,
@@ -215,17 +217,37 @@ local function add_gui_content(window, entity)
     inner_flow.style.left_margin = 4
     inner_flow.style.vertical_spacing = 0
     for group, set_keys in pairs(related_priority_set_keys) do
-      local label = inner_flow.add({
+      local label_flow = inner_flow.add({
+        type = "flow",
+        direction = "horizontal"
+      })
+      label_flow.style.vertical_align = "center"
+
+      local label = label_flow.add({
         type = "label",
         style = "heading_2_label",
         caption = group,
       })
       label.style.bottom_padding = 0
+
+      local button = label_flow.add({
+        type = "sprite-button",
+        resize_to_sprite = false,
+        sprite = "arr-logo",
+        tooltip = "Click to show in the full priority list window",
+        tags = {
+          event = SHOW_PRIORITY_GUI_EVENT,
+          group = group,
+          entity = entity.name,
+        }
+      })
+      button.style.size = {24, 24}
+
       for _, set_key in ipairs(set_keys) do
         local flow = inner_flow.add({
           type = "flow",
         })
-        GUIComponentItemPrioritySet.create(flow, priority_sets, set_key)
+        GUIComponentItemPrioritySet.create(flow, priority_sets, set_key, 6)
       end
     end
   end
@@ -393,13 +415,17 @@ end
 
 local function on_furnace_recipe_changed(event, tags, player)
   local new_recipe_name = event.element.elem_value
-  local entity = global.entities[event.element.tags.id]
+  local entity = global.entities[tags.id]
   if not new_recipe_name then
     local recipe = FurnaceRecipeManager.get_recipe(entity)
     event.element.elem_value = recipe and recipe.name
     return
   end
   FurnaceRecipeManager.set_recipe(entity, new_recipe_name)
+end
+
+local function on_show_priority_gui(event, tags, player)
+  GUIItemPriority.open(player, tags.group, tags.entity)
 end
 
 GUIDispatcher.register(defines.events.on_gui_click, GUI_CLOSE_EVENT, on_gui_closed)
@@ -417,5 +443,7 @@ GUIDispatcher.register(defines.events.on_gui_text_changed, CONDITION_VALUE_CHANG
 GUIDispatcher.register(defines.events.on_gui_confirmed, CONDITION_VALUE_CHANGED_EVENT, on_condition_value_confirmed)
 
 GUIDispatcher.register(defines.events.on_gui_elem_changed, FURNACE_RECIPE_EVENT, on_furnace_recipe_changed)
+
+GUIDispatcher.register(defines.events.on_gui_click, SHOW_PRIORITY_GUI_EVENT, on_show_priority_gui)
 
 return GUIEntityPanel

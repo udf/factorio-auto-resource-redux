@@ -10,7 +10,7 @@ local GUI_CLOSE_EVENT = "arr-priority-close"
 local COPY_TO_ALL_EVENT = "arr-priority-copy-to-all"
 
 
-local function add_tab_contents(tabbed_pane, priority_sets)
+local function add_tab_contents(tabbed_pane, priority_sets, scroll_to_entity)
   -- group priority sets into G[group][entity_name] = {set_keys}
   local grouped_priority_sets = {}
   local groups_with_subitem_column = {}
@@ -87,15 +87,28 @@ local function add_tab_contents(tabbed_pane, priority_sets)
     })
 
     for entity_name, set_keys in pairs(entities) do
-      local entity_sprite = content_table.add({
-        type = "sprite",
-        sprite = "entity/" .. entity_name,
-        elem_tooltip = { type = "entity", name = entity_name },
-      })
+      if entity_name == scroll_to_entity then
+        local entity_button = content_table.add({
+          type = "sprite-button",
+          sprite = "entity/" .. entity_name,
+          elem_tooltip = { type = "entity", name = entity_name },
+          style = "side_menu_button",
+        })
+        entity_button.toggled = true
+      else
+        content_table.add({
+          type = "sprite",
+          sprite = "entity/" .. entity_name,
+          elem_tooltip = { type = "entity", name = entity_name },
+        })
+      end
       local content_flow = content_table.add({
         type = "flow",
         direction = "vertical",
       })
+      if entity_name == scroll_to_entity then
+        scroll_pane.scroll_to_element(content_flow, "top-third")
+      end
 
       for _, set_key in ipairs(set_keys) do
         local priority_set = priority_sets[set_key]
@@ -140,7 +153,7 @@ local function add_tab_contents(tabbed_pane, priority_sets)
   end
 end
 
-function GUIItemPriority.open(player)
+function GUIItemPriority.open(player, target_tab, target_entity)
   local screen = player.gui.screen
   local window = screen[GUICommon.GUI_ITEM_PRIORITY]
   if window then
@@ -173,7 +186,14 @@ function GUIItemPriority.open(player)
   })
 
   local priority_sets = ItemPriorityManager.get_priority_sets(player)
-  add_tab_contents(tabbed_pane, priority_sets)
+  add_tab_contents(tabbed_pane, priority_sets, target_entity)
+
+  for i, tab in ipairs(tabbed_pane.tabs) do
+    if tab.tab.name == target_tab then
+      tabbed_pane.selected_tab_index = i
+      break
+    end
+  end
 end
 
 local function on_close(event, tags, player)

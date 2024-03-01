@@ -144,7 +144,8 @@ local function array_move_item(arr, index, target_index)
   return true
 end
 
-function GUIComponentItemPrioritySet.create(parent, priority_sets, set_key)
+function GUIComponentItemPrioritySet.create(parent, priority_sets, set_key, items_per_row)
+  items_per_row = items_per_row or 10
   local main_flow = parent.add({
     type = "flow",
     direction = "vertical",
@@ -155,12 +156,12 @@ function GUIComponentItemPrioritySet.create(parent, priority_sets, set_key)
     name = "table_frame",
     style = "arr_deep_frame",
   })
-  table_frame.style.maximal_width = 400
+  table_frame.style.maximal_width = items_per_row * 40
   local component_key = get_component_key(priority_sets.domain_key, set_key)
   local table_elem = table_frame.add({
     type = "table",
     name = "table",
-    column_count = 10,
+    column_count = items_per_row,
     style = "logistics_slot_table",
     tags = {
       domain = priority_sets.domain_key,

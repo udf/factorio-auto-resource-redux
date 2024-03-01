@@ -3,8 +3,8 @@ A Factorio mod that automates most logistics so you can focus on combat.
 This makes the gameplay similar to a RTS game.
 
 # Features
-## Global Storage
-Each force (team) gets a global storage that's unique to each surface.
+## Shared Storage
+Each force (team) gets a storage that's unique to each surface.
   The items in the storage are shown in a table at the top of the screen:  
   ![List of items in the storage](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/resource-list.png)
 
@@ -49,20 +49,22 @@ Using these options it is possible to manage complex production chains, like cra
 ![Kovarex enrichment](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/kovarex-reservation.jpg)
 
 ## Furnaces
-- Furnace recipes can be set in the custom UI that opens next to the standard furnace UI.  
+- Furnace recipes can be set in the panel that opens next to the standard furnace UI.  
 (TODO: gif of furnace recipe being set)
 - Recipes can also be copied/pasted as well as blueprinted:  
 (TODO: gif of furnace recipe copy paste, and then full furnace copy paste)
 
 ## Fuel/ammo selection
 The **Item Priority** section of the conditions UI allows you to select which fuel/ammo item gets inserted first:  
-(TODO: image of item priority on a vehicle's entity panel)
+![Vehicle item priority](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/entity-settings-vehicle.png)
 
 Clicking on an item allows the quantity that should be inserted to be configured.  
 Read the in-game tooltips to learn how to rearrange the items.
 
-A UI containing all configurable items can also be accessed by clicking the gear icon in the top left of the screen:  
-(TODO: gif of clicking gear in entity panel and big UI opening)
+A UI containing all configurable items can also be accessed by clicking the gear icon:  
+![Vehicle item priority opening full UI](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/entity-settings-vehicle-priority.gif)
+
+It can also be accessed via the gear icon at the top-left of the screen.
 
 ## Collection of mined resources
 Resources mined by a mining drill are placed into a hidden chest that is created when the mining drill is built - the mod collects items from this hidden chest:  
