@@ -181,8 +181,8 @@ function ItemPriorityManager.get_priority_sets_for_entity(entity)
   local priority_sets = ItemPriorityManager.get_priority_sets_for_domain(DomainStore.get_domain_key(entity))
   local filtered_sets = {}
   for set_key, priority_set in pairs(priority_sets) do
-    local entity_name = entity_name_mapping[priority_set.entity_name] or priority_set.entity_name
-    if entity_name == entity.name then
+    local entity_name = entity_name_mapping[entity.name] or entity.name
+    if entity_name == priority_set.entity_name then
       filtered_sets[set_key] = priority_set
     end
   end
