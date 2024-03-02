@@ -182,11 +182,11 @@ end
 function Storage.get_available_item_count(storage, storage_key, amount_requested, use_reserved)
   local amount_stored = storage.items[storage_key] or 0
   local amount_reserved = storage.reservations[storage_key] or 0
-  -- make sure reservation works by automatically marking a stack of the item as reserved
+  -- make sure reservation works by automatically marking up to a stack of the item as reserved
   if use_reserved and storage.items[storage_key] and amount_reserved <= 0 and not storage.last_entity.is_player() then
     local fluid_name = Storage.unpack_fluid_item_name(storage_key)
     local prototype = game.item_prototypes[storage_key] or { stack_size = 1 }
-    amount_reserved = fluid_name and DEFAULT_FLUID_RESERVATION or prototype.stack_size
+    amount_reserved = fluid_name and DEFAULT_FLUID_RESERVATION or math.min(amount_requested, prototype.stack_size)
     Storage.set_item_limit_and_reservation(storage, storage_key, storage.last_entity, nil, amount_reserved)
   end
   if use_reserved then
