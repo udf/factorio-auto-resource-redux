@@ -139,6 +139,9 @@ local function update_gui(player)
 
   -- remove unexpected buttons
   local table_flow = gui_top[GUICommon.GUI_RESOURCE_TABLE]
+  if not table_flow then
+    return
+  end
   for _, table_name in ipairs(table_flow.children_names) do
     local table_elem = table_flow[table_name]
     for _, button_name in ipairs(table_elem.children_names) do
