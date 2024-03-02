@@ -96,3 +96,6 @@ script.on_event(GUIDispatcher.ON_COPY_SETTINGS_KEYPRESS, GUIDispatcher.on_event)
 script.on_event(defines.events.on_player_selected_area, EntityCustomData.on_player_selected_area)
 script.on_event(defines.events.on_player_alt_selected_area, EntityCustomData.on_player_alt_selected_area)
 script.on_event(GUIDispatcher.ON_COPY_CONDITIONS_KEYPRESS, GUIDispatcher.on_event)
+
+-- other
+script.on_event(defines.events.on_player_changed_surface, GUIResourceList.on_player_changed_surface)

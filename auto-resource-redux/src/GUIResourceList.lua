@@ -250,6 +250,11 @@ local function on_button_clicked(event, tags, player)
   end
 end
 
+function GUIResourceList.on_player_changed_surface(event)
+  local player = game.get_player(event.player_index)
+  update_gui(player)
+end
+
 GUIDispatcher.register(defines.events.on_gui_click, RES_BUTTON_EVENT, on_button_clicked)
 
 return GUIResourceList
