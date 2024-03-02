@@ -241,7 +241,7 @@ local function on_button_clicked(event, tags, player)
     ["shift-right"] = math.ceil(stack_size / 2),
     ["control-left"] = stored_count,
     ["control-right"] = math.ceil(stored_count / 2),
-  })[click_str] or 1
+  })[click_str] or 0
   amount_to_give = Util.clamp(amount_to_give, 0, stored_count)
   if amount_to_give <= 0 then
     return
@@ -252,15 +252,18 @@ local function on_button_clicked(event, tags, player)
   local amount_given = Storage.put_in_inventory(storage, storage_key, inventory, amount_to_give, true)
   update_gui(player)
 
+  local item_proto = game.item_prototypes[storage_key]
   if amount_given <= 0 then
     player.print({
       "inventory-restriction.player-inventory-full",
-      game.item_prototypes[storage_key].localised_name,
+      item_proto.localised_name,
       { "inventory-full-message.main" }
     })
   end
 
-  if cursor_cleared then
+  -- TODO: change this to only place in cursor when the player pipettes (q)
+  local placeable = item_proto.place_result or item_proto.place_as_equipment_result or item_proto.place_as_tile_result
+  if cursor_cleared and placeable then
     local stack = inventory.find_item_stack(storage_key)
     local cursor = player.cursor_stack
     if cursor and stack and stack.valid_for_read then
