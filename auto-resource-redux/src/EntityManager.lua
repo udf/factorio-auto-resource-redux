@@ -172,8 +172,10 @@ function EntityManager.on_entity_created(event)
       player = entity.last_user,
       raise_built = true
     })
-    chest.destructible = false
-    global.sink_chest_parents[entity.unit_number] = chest.unit_number
+    if chest then
+      chest.destructible = false
+      global.sink_chest_parents[entity.unit_number] = chest.unit_number
+    end
   end
 end
 
