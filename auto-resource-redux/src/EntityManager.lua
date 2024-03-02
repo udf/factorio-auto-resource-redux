@@ -10,29 +10,54 @@ local LoopBuffer = require "src.LoopBuffer"
 local Storage = require "src.Storage"
 local Util = require "src.Util"
 
+local evaluate_condition = EntityCondition.evaluate
+
+-- number of ticks it takes to process the whole queue
+local DEFAULT_TICKS_PER_CYCLE = 60
 local entity_queue_specs = {
-  ["sink-chest"] = { handler = EntityHandlers.handle_sink_chest },
-  ["sink-tank"] = { handler = EntityHandlers.handle_sink_tank },
-  ["arr-requester-tank"] = { handler = EntityHandlers.handle_requester_tank, n_per_tick = 1 },
-  ["logistic-sink-chest"] = { handler = LogisticManager.handle_sink_chest, n_per_tick = 1 },
-  ["logistic-requester-chest"] = { handler = LogisticManager.handle_requester_chest, n_per_tick = 1 },
+  ["sink-chest"] = { handler = EntityHandlers.handle_sink_chest, ticks_per_cycle = 180 },
+  ["sink-tank"] = { handler = EntityHandlers.handle_sink_tank, ticks_per_cycle = 120 },
+  ["arr-requester-tank"] = { handler = EntityHandlers.handle_requester_tank },
+  ["logistic-sink-chest"] = { handler = LogisticManager.handle_sink_chest },
+  ["logistic-requester-chest"] = { handler = LogisticManager.handle_requester_chest },
   ["car"] = { handler = EntityHandlers.handle_car },
   ["ammo-turret"] = { handler = EntityHandlers.handle_turret },
-  ["boiler"] = { handler = EntityHandlers.handle_boiler, n_per_tick = 2 },
-  ["mining-drill"] = { handler = EntityHandlers.handle_mining_drill },
-  ["furnace"] = { handler = EntityHandlers.handle_furnace },
-  ["assembling-machine"] = { handler = EntityHandlers.handle_assembler },
-  ["lab"] = { handler = EntityHandlers.handle_lab, n_per_tick = 2 },
+  ["boiler"] = { handler = EntityHandlers.handle_boiler, ticks_per_cycle = 120 },
+  ["mining-drill"] = { handler = EntityHandlers.handle_mining_drill, ticks_per_cycle = 120 },
+  ["furnace"] = { handler = EntityHandlers.handle_furnace, ticks_per_cycle = 120 },
+  ["assembling-machine"] = { handler = EntityHandlers.handle_assembler, ticks_per_cycle = 120},
+  ["lab"] = { handler = EntityHandlers.handle_lab, ticks_per_cycle = 120 },
 }
 
-local function manage_entity(entity)
+local function handle_entity(entity, handler)
+  if not handler then
+    local queue_key = EntityGroups.names_to_groups[entity.name]
+    handler = entity_queue_specs[queue_key].handler
+  end
+  local entity_data = global.entity_data[entity.unit_number] or {}
+  local use_reserved = entity_data.use_reserved
+  local storage = Storage.get_storage(entity)
+  local running = not entity.to_be_deconstructed() and evaluate_condition(entity_data.condition, storage)
+  return handler({
+    entity = entity,
+    storage = storage,
+    use_reserved = use_reserved,
+    paused = not running
+  })
+end
+
+local function manage_entity(entity, immediately_handle)
   local queue_key = EntityGroups.names_to_groups[entity.name]
   if queue_key == nil then
     return
   end
   log(string.format("Managing %d (name=%s, type=%s, queue=%s)", entity.unit_number, entity.name, entity.type, queue_key))
   global.entities[entity.unit_number] = entity
-  LoopBuffer.add(global.entity_queues[queue_key], entity.unit_number)
+  local queue = global.entity_queues[queue_key]
+  LoopBuffer.add(queue, entity.unit_number)
+  if immediately_handle then
+    handle_entity(entity)
+  end
   return queue_key
 end
 
@@ -85,12 +110,11 @@ local function on_entity_removed(entity_id)
 end
 
 local busy_counters = {}
-local evaluate_condition = EntityCondition.evaluate
 function EntityManager.on_tick()
   local total_processed = 0
   for queue_key, spec in pairs(entity_queue_specs) do
-    local max_updates = spec.n_per_tick or 10
     local queue = global.entity_queues[queue_key]
+    local max_updates = math.max(1, math.ceil(queue.size / (spec.ticks_per_cycle or DEFAULT_TICKS_PER_CYCLE)))
     local num_processed = 0
     repeat
       if queue.size == 0 then
@@ -102,31 +126,22 @@ function EntityManager.on_tick()
         on_entity_removed(entity_id)
         LoopBuffer.remove_current(queue)
       else
-        local entity_data = global.entity_data[entity_id] or {}
-        local use_reserved = entity_data.use_reserved
-        local storage = Storage.get_storage(entity)
-        local running = not entity.to_be_deconstructed() and evaluate_condition(entity_data.condition, storage)
-        local busy = spec.handler({
-          entity = entity,
-          storage = storage,
-          use_reserved = use_reserved,
-          paused = not running
-        })
-        if busy then
+        if handle_entity(entity, spec.handler) then
           busy_counters[queue_key] = (busy_counters[queue_key] or 0) + 1
         end
         num_processed = num_processed + 1
       end
       if queue.iter_index == 1 and queue.size > 10 then
-        local count = busy_counters[queue_key] or 0
-        -- print(("%s: %d/%d (%.2f%%) busy, %d/%d (%.2f%%) idle"):format(
+        -- local count = busy_counters[queue_key] or 0
+        -- print(("%s: %d/%d (%.2f%%) busy, %d/%d (%.2f%%) idle, %d updates per tick"):format(
         --   queue_key,
         --   count,
         --   queue.size,
         --   count / queue.size * 100,
         --   (queue.size - count),
         --   queue.size,
-        --   (queue.size - count) / queue.size * 100
+        --   (queue.size - count) / queue.size * 100,
+        --   max_updates
         -- ))
         busy_counters[queue_key] = 0
       end
@@ -143,7 +158,7 @@ function EntityManager.on_entity_created(event)
   if global.forces[entity.force.name] == nil then
     return
   end
-  local queue_key = manage_entity(entity)
+  local queue_key = manage_entity(entity, true)
   if queue_key == nil then
     return
   end
@@ -196,7 +211,7 @@ end
 
 function EntityManager.on_entity_replaced(data)
   EntityCustomData.migrate_data(data.old_entity_unit_number, data.new_entity_unit_number)
-  manage_entity(data.new_entity)
+  manage_entity(data.new_entity, true)
 end
 
 return EntityManager
