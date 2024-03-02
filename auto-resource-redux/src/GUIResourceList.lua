@@ -240,13 +240,29 @@ local function on_button_clicked(event, tags, player)
     ["control-right"] = math.ceil(stored_count / 2),
   })[click_str] or 1
   amount_to_give = Util.clamp(amount_to_give, 0, stored_count)
-  if amount_to_give > 0 then
-    Storage.put_in_inventory(
-      storage, storage_key,
-      player.get_inventory(defines.inventory.character_main), amount_to_give,
-      true
-    )
-    update_gui(player)
+  if amount_to_give <= 0 then
+    return
+  end
+  local cursor_cleared = player.clear_cursor()
+
+  local inventory = player.get_inventory(defines.inventory.character_main)
+  local amount_given = Storage.put_in_inventory(storage, storage_key, inventory, amount_to_give, true)
+  update_gui(player)
+
+  if amount_given <= 0 then
+    player.print({
+      "inventory-restriction.player-inventory-full",
+      game.item_prototypes[storage_key].localised_name,
+      { "inventory-full-message.main" }
+    })
+  end
+
+  if cursor_cleared then
+    local stack = inventory.find_item_stack(storage_key)
+    local cursor = player.cursor_stack
+    if cursor and stack and stack.valid_for_read then
+      cursor.transfer_stack(stack)
+    end
   end
 end
 
