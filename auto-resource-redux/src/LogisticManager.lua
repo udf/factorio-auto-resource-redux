@@ -27,7 +27,7 @@ local function handle_requests(o, inventory, ammo_inventory, extra_stack)
           local inserted = Storage.put_in_inventory(
             o.storage, item_name,
             ammo_inventory, amount_needed,
-            use_reserved
+            o.use_reserved
           )
           amount_needed = amount_needed - inserted
           total_inserted = total_inserted + inserted
@@ -35,7 +35,7 @@ local function handle_requests(o, inventory, ammo_inventory, extra_stack)
         total_inserted = total_inserted + Storage.put_in_inventory(
           o.storage, item_name,
           inventory, amount_needed,
-          use_reserved
+          o.use_reserved
         )
       end
     end
