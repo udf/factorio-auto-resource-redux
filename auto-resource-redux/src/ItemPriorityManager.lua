@@ -67,8 +67,23 @@ local function create_default_priority_sets()
     end
     local fuel_category = item.fuel_category
     if fuel_category ~= nil then
-      fuels[fuel_category][name] = item.fuel_value
+      table.insert(fuels[fuel_category], name)
     end
+  end
+
+  local sort_fn = Util.prototype_order_comp_fn(
+    function(item)
+      return game.item_prototypes[item]
+    end,
+    function(a, b)
+      return a > b
+    end
+  )
+  for category, item_list in pairs(fuels) do
+    table.sort(item_list, sort_fn)
+  end
+  for category, item_list in pairs(ammunitions) do
+    table.sort(item_list, sort_fn)
   end
 
   for entity_name, entity in pairs(game.entity_prototypes) do
@@ -93,7 +108,8 @@ local function create_default_priority_sets()
         local category = "fuel." .. table.concat(Util.table_keys(burner_prototype.fuel_categories), "+")
         default_priority_sets[key] = create_subset(entity.is_building and "Fuel" or "Vehicle Fuel", category, entity_name)
         for category, _ in pairs(burner_prototype.fuel_categories) do
-          for fuel_item, fuel_value in pairs(fuels[category]) do
+          for _, fuel_item in ipairs(fuels[category]) do
+            local fuel_value = game.item_prototypes[fuel_item].fuel_value
             local watts = entity.max_energy_usage * 60
             local num_items = math.ceil(FUEL_BURN_SECONDS_TARGET / (fuel_value / watts))
             default_priority_sets[key].item_counts[fuel_item] = clamp_to_stack_size(fuel_item, num_items)

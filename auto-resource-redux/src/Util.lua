@@ -189,4 +189,29 @@ function Util.get_default_fluid_temperature(fluid_name)
   return temp
 end
 
+--- Returns a function for sorting prototypes by their .order attributes
+--- Items are ordered by their groups, subgroups, then finally by their order
+---@param get_prototype_fn function function that returns the prototype for the given item
+---@param order_comp_fn function|nil function that is used to compare the two order strings, defaults to a < b
+---@return function comp comparison function to be used with table.sort
+function Util.prototype_order_comp_fn(get_prototype_fn, order_comp_fn)
+  order_comp_fn = order_comp_fn or function (a, b)
+    return a < b
+  end
+  return function(a, b)
+    local proto_a = get_prototype_fn(a)
+    local proto_b = get_prototype_fn(b)
+    if proto_a.group.order ~= proto_b.group.order then
+      return order_comp_fn(proto_a.group.order, proto_b.group.order)
+    end
+    if proto_a.subgroup.order ~= proto_b.subgroup.order then
+      return order_comp_fn(proto_a.subgroup.order, proto_b.subgroup.order)
+    end
+    if proto_a.order ~= proto_b.order then
+      return order_comp_fn(proto_a.order, proto_b.order)
+    end
+    return order_comp_fn(proto_a.name, proto_b.name)
+  end
+end
+
 return Util

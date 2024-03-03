@@ -170,19 +170,12 @@ function GUIResourceList.initialise()
   end
   table.sort(
     storage_keys_order,
-    function(a, b)
-      local fluid_name_a = Storage.unpack_fluid_item_name(a)
-      local fluid_name_b = Storage.unpack_fluid_item_name(b)
-      local proto_a = fluid_name_a and game.fluid_prototypes[fluid_name_a] or game.item_prototypes[a]
-      local proto_b = fluid_name_b and game.fluid_prototypes[fluid_name_b] or game.item_prototypes[b]
-      if proto_a.group.order ~= proto_b.group.order then
-        return proto_a.group.order < proto_b.group.order
+    Util.prototype_order_comp_fn(
+      function(key)
+        local fluid_name = Storage.unpack_fluid_item_name(key)
+        return fluid_name and game.fluid_prototypes[fluid_name] or game.item_prototypes[key]
       end
-      if proto_a.subgroup.order ~= proto_b.subgroup.order then
-        return proto_a.subgroup.order < proto_b.subgroup.order
-      end
-      return proto_a.order < proto_b.order
-    end
+    )
   )
 
   storage_keys_groups = {}

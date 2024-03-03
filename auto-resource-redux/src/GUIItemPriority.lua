@@ -5,6 +5,7 @@ local GUICommon = require "src.GUICommon"
 local GUIDispatcher = require "src.GUIDispatcher"
 local GUIComponentItemPrioritySet = require "src.GUIComponentItemPrioritySet"
 local R = require "src.RichText"
+local Util = require "src.Util"
 
 local GUI_CLOSE_EVENT = "arr-priority-close"
 local COPY_TO_ALL_EVENT = "arr-priority-copy-to-all"
@@ -33,7 +34,27 @@ local function add_tab_contents(tabbed_pane, priority_sets, scroll_to_entity)
     ::continue::
   end
 
+  -- sort entities to match their GUI order
+  local sort_fn = Util.prototype_order_comp_fn(
+    function(entity_name)
+      local entity_prototype = game.entity_prototypes[entity_name]
+      local item = entity_prototype.items_to_place_this[1]
+      if item then
+        return game.item_prototypes[item.name]
+      end
+      return entity_prototype
+    end
+  )
+  local grouped_entity_order = {}
   for group, entities in pairs(grouped_priority_sets) do
+    grouped_entity_order[group] = {}
+    for entity_name, set_keys in pairs(entities) do
+      table.insert(grouped_entity_order[group], entity_name)
+    end
+    table.sort(grouped_entity_order[group], sort_fn)
+  end
+
+  for group, entity_names in pairs(grouped_entity_order) do
     local tab = tabbed_pane.add({
       type = "tab",
       caption = group,
@@ -86,7 +107,7 @@ local function add_tab_contents(tabbed_pane, priority_sets, scroll_to_entity)
       style = "bordered_table"
     })
 
-    for entity_name, set_keys in pairs(entities) do
+    for _, entity_name in ipairs(entity_names) do
       if entity_name == scroll_to_entity then
         local entity_button = content_table.add({
           type = "sprite-button",
@@ -110,7 +131,7 @@ local function add_tab_contents(tabbed_pane, priority_sets, scroll_to_entity)
         scroll_pane.scroll_to_element(content_flow, "top-third")
       end
 
-      for _, set_key in ipairs(set_keys) do
+      for _, set_key in ipairs(grouped_priority_sets[group][entity_name]) do
         local priority_set = priority_sets[set_key]
         local controls_flow = content_flow.add({
           type = "flow",
