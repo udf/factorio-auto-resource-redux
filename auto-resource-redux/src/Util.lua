@@ -201,10 +201,10 @@ function Util.prototype_order_comp_fn(get_prototype_fn, order_comp_fn)
   return function(a, b)
     local proto_a = get_prototype_fn(a)
     local proto_b = get_prototype_fn(b)
-    if proto_a.group.order ~= proto_b.group.order then
+    if proto_a.group.name ~= proto_b.group.name then
       return order_comp_fn(proto_a.group.order, proto_b.group.order)
     end
-    if proto_a.subgroup.order ~= proto_b.subgroup.order then
+    if proto_a.subgroup.name ~= proto_b.subgroup.name then
       return order_comp_fn(proto_a.subgroup.order, proto_b.subgroup.order)
     end
     if proto_a.order ~= proto_b.order then
