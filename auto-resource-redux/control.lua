@@ -58,6 +58,13 @@ local function on_cloned(event)
   EntityCustomData.on_cloned(event)
 end
 
+local function on_player_changed_surface(event)
+  if not initialised then
+    return
+  end
+  GUIResourceList.on_player_changed_surface(event)
+end
+
 script.on_nth_tick(1, on_tick)
 
 -- create
@@ -98,4 +105,4 @@ script.on_event(defines.events.on_player_alt_selected_area, EntityCustomData.on_
 script.on_event(GUIDispatcher.ON_COPY_CONDITIONS_KEYPRESS, GUIDispatcher.on_event)
 
 -- other
-script.on_event(defines.events.on_player_changed_surface, GUIResourceList.on_player_changed_surface)
+script.on_event(defines.events.on_player_changed_surface, on_player_changed_surface)
