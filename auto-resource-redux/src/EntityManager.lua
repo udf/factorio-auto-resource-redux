@@ -21,6 +21,7 @@ local entity_queue_specs = {
   ["logistic-sink-chest"] = { handler = LogisticManager.handle_sink_chest },
   ["logistic-requester-chest"] = { handler = LogisticManager.handle_requester_chest },
   ["car"] = { handler = EntityHandlers.handle_car },
+  ["spidertron"] = { handler = LogisticManager.handle_spidertron_requests, ticks_per_cycle = 120 },
   ["ammo-turret"] = { handler = EntityHandlers.handle_turret },
   ["boiler"] = { handler = EntityHandlers.handle_boiler, ticks_per_cycle = 120 },
   ["mining-drill"] = { handler = EntityHandlers.handle_mining_drill, ticks_per_cycle = 120 },

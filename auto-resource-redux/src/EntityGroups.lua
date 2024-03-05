@@ -17,6 +17,7 @@ EntityGroups.entity_group_filters = {
   ["logistic-sink-chest"] = { filter = "name", name = "arr-logistic-sink-chest" },
   ["logistic-requester-chest"] = { filter = "name", name = "arr-logistic-requester-chest" },
   ["arr-requester-tank"] = { filter = "name", name = "arr-requester-tank" },
+  ["spidertron"] = { filter = "type", type = "spider-vehicle" },
 }
 
 function EntityGroups.calculate_groups()

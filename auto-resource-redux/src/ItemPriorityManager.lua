@@ -87,54 +87,65 @@ local function create_default_priority_sets()
   end
 
   for entity_name, entity in pairs(game.entity_prototypes) do
-    if EntityGroups.names_to_groups[entity.name] ~= nil and entity_name_mapping[entity_name] == nil then
-      local attack_parameters = entity.attack_parameters or {}
-      -- ammo for turrets
-      if attack_parameters.ammo_categories ~= nil then
-        local key = ItemPriorityManager.get_ammo_key(entity_name, 1)
-        local category = "ammo." .. table.concat(attack_parameters.ammo_categories, "+")
-        default_priority_sets[key] = create_subset("Ammo", category, entity_name)
-        for _, category in ipairs(attack_parameters.ammo_categories) do
+    if EntityGroups.names_to_groups[entity.name] == nil then
+      goto continue
+    end
+    if entity_name_mapping[entity_name] ~= nil then
+      goto continue
+    end
+    -- spiders' logistic requests should be used instead of priority insertion
+    -- TODO: find out how to detect a spider-vehicle with no logistics, instead of assuming all of them support it
+    if entity.type == "spider-vehicle" then
+      goto continue
+    end
+
+    local attack_parameters = entity.attack_parameters or {}
+    -- ammo for turrets
+    if attack_parameters.ammo_categories ~= nil then
+      local key = ItemPriorityManager.get_ammo_key(entity_name, 1)
+      local category = "ammo." .. table.concat(attack_parameters.ammo_categories, "+")
+      default_priority_sets[key] = create_subset("Ammo", category, entity_name)
+      for _, category in ipairs(attack_parameters.ammo_categories) do
+        for _, ammo_item in ipairs(ammunitions[category]) do
+          default_priority_sets[key].item_counts[ammo_item] = entity.automated_ammo_count
+        end
+      end
+    end
+
+    -- fuel
+    local burner_prototype = entity.burner_prototype
+    if burner_prototype ~= nil then
+      local key = ItemPriorityManager.get_fuel_key(entity_name)
+      local category = "fuel." .. table.concat(Util.table_keys(burner_prototype.fuel_categories), "+")
+      default_priority_sets[key] = create_subset(entity.is_building and "Fuel" or "Vehicle Fuel", category, entity_name)
+      for category, _ in pairs(burner_prototype.fuel_categories) do
+        for _, fuel_item in ipairs(fuels[category]) do
+          local fuel_value = game.item_prototypes[fuel_item].fuel_value
+          local watts = entity.max_energy_usage * 60
+          local num_items = math.ceil(FUEL_BURN_SECONDS_TARGET / (fuel_value / watts))
+          default_priority_sets[key].item_counts[fuel_item] = clamp_to_stack_size(fuel_item, num_items)
+        end
+      end
+    end
+
+    -- vehicle ammo
+    -- TODO: set ammo count from fire rate?
+    if entity.guns ~= nil then
+      for i, gun_prototype in ipairs(entity.indexed_guns) do
+        local key = ItemPriorityManager.get_ammo_key(entity_name, i)
+        local category = "ammo." .. table.concat(gun_prototype.attack_parameters.ammo_categories, "+")
+        default_priority_sets[key] = create_subset("Ammo", category, entity_name, gun_prototype.name)
+        for _, category in ipairs(gun_prototype.attack_parameters.ammo_categories) do
           for _, ammo_item in ipairs(ammunitions[category]) do
-            default_priority_sets[key].item_counts[ammo_item] = entity.automated_ammo_count
-          end
-        end
-      end
-
-      -- fuel
-      local burner_prototype = entity.burner_prototype
-      if burner_prototype ~= nil then
-        local key = ItemPriorityManager.get_fuel_key(entity_name)
-        local category = "fuel." .. table.concat(Util.table_keys(burner_prototype.fuel_categories), "+")
-        default_priority_sets[key] = create_subset(entity.is_building and "Fuel" or "Vehicle Fuel", category, entity_name)
-        for category, _ in pairs(burner_prototype.fuel_categories) do
-          for _, fuel_item in ipairs(fuels[category]) do
-            local fuel_value = game.item_prototypes[fuel_item].fuel_value
-            local watts = entity.max_energy_usage * 60
-            local num_items = math.ceil(FUEL_BURN_SECONDS_TARGET / (fuel_value / watts))
-            default_priority_sets[key].item_counts[fuel_item] = clamp_to_stack_size(fuel_item, num_items)
-          end
-        end
-      end
-
-      -- vehicle ammo
-      -- TODO: set ammo count from fire rate?
-      if entity.guns ~= nil then
-        for i, gun_prototype in ipairs(entity.indexed_guns) do
-          local key = ItemPriorityManager.get_ammo_key(entity_name, i)
-          local category = "ammo." .. table.concat(gun_prototype.attack_parameters.ammo_categories, "+")
-          default_priority_sets[key] = create_subset("Ammo", category, entity_name, gun_prototype.name)
-          for _, category in ipairs(gun_prototype.attack_parameters.ammo_categories) do
-            for _, ammo_item in ipairs(ammunitions[category]) do
-              default_priority_sets[key].item_counts[ammo_item] = clamp_to_stack_size(
-                ammo_item,
-                DEFAULT_VEHICLE_AMMO_AMOUNT
-              )
-            end
+            default_priority_sets[key].item_counts[ammo_item] = clamp_to_stack_size(
+              ammo_item,
+              DEFAULT_VEHICLE_AMMO_AMOUNT
+            )
           end
         end
       end
     end
+    ::continue::
   end
 
   -- Compute default list order
@@ -148,6 +159,7 @@ local function create_default_priority_sets()
 
   log("Computed prioritisable items:")
   log(serpent.block(default_priority_sets))
+  ::continue::
 end
 
 local function add_new_items_to_list(old_list, expected_items_dict)

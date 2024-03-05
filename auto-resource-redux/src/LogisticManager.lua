@@ -195,6 +195,23 @@ function LogisticManager.handle_requester_chest(o)
   return handle_requests(o, inventory)
 end
 
+function LogisticManager.handle_spidertron_requests(o)
+  if o.paused then
+    return false
+  end
+  local entity = o.entity
+  local trash_inv = entity.get_inventory(defines.inventory.spider_trash)
+  if not trash_inv then
+    -- no trash inventory means no requests to process
+    return false
+  end
+  Storage.add_from_inventory(o.storage, trash_inv, true)
+
+  local inventory = entity.get_inventory(defines.inventory.spider_trunk)
+  local ammo_inventory = entity.get_inventory(defines.inventory.spider_ammo)
+  return handle_requests(o, inventory, ammo_inventory)
+end
+
 function LogisticManager.initialise()
   if global.alert_build_transfers == nil then
     global.alert_build_transfers = {}
