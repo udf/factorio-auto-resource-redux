@@ -264,7 +264,7 @@ function EntityHandlers.handle_lab(o)
   if o.paused then
     return false
   end
-  local pack_count_target = math.ceil(o.entity.speed_bonus * 0.5) + 1
+  local pack_count_target = math.ceil(o.entity.speed_bonus) + 1
   local lab_inv = o.entity.get_inventory(defines.inventory.lab_input)
   local inserted = false
   for i, item_name in ipairs(game.entity_prototypes[o.entity.name].lab_inputs) do
