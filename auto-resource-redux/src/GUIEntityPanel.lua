@@ -425,7 +425,7 @@ local function on_furnace_recipe_changed(event, tags, player)
 end
 
 local function on_show_priority_gui(event, tags, player)
-  GUIItemPriority.open(player, tags.group, tags.entity)
+  GUIItemPriority.open(player, tags.group, ItemPriorityManager.get_mapped_entity_name(tags.entity))
 end
 
 GUIDispatcher.register(defines.events.on_gui_click, GUI_CLOSE_EVENT, on_gui_closed)

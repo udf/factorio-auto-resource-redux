@@ -30,6 +30,10 @@ local function create_subset(group, category, entity_name, sub_item_name)
   }
 end
 
+function ItemPriorityManager.get_mapped_entity_name(entity_name)
+  return entity_name_mapping[entity_name] or entity_name
+end
+
 function ItemPriorityManager.get_fuel_key(entity_name)
   return "fuel." .. (entity_name_mapping[entity_name] or entity_name)
 end
@@ -209,8 +213,7 @@ function ItemPriorityManager.get_priority_sets_for_entity(entity)
   local priority_sets = ItemPriorityManager.get_priority_sets_for_domain(DomainStore.get_domain_key(entity))
   local filtered_sets = {}
   for set_key, priority_set in pairs(priority_sets) do
-    local entity_name = entity_name_mapping[entity.name] or entity.name
-    if entity_name == priority_set.entity_name then
+    if ItemPriorityManager.get_mapped_entity_name(entity.name) == priority_set.entity_name then
       filtered_sets[set_key] = priority_set
     end
   end
