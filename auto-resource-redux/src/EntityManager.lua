@@ -217,4 +217,8 @@ function EntityManager.on_entity_replaced(data)
   manage_entity(data.new_entity, true)
 end
 
+function EntityManager.on_entity_deployed(data)
+  manage_entity(data.entity, true)
+end
+
 return EntityManager

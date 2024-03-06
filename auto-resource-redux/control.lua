@@ -81,7 +81,10 @@ script.on_event(defines.events.script_raised_destroy, EntityManager.on_entity_re
 script.on_event(defines.events.on_entity_died, EntityManager.on_entity_died)
 
 -- custom
-remote.add_interface("auto-resource-redux", { on_entity_replaced = EntityManager.on_entity_replaced })
+remote.add_interface("auto-resource-redux", {
+  on_entity_replaced = EntityManager.on_entity_replaced,
+  on_entity_deployed = EntityManager.on_entity_deployed
+})
 
 -- gui
 script.on_event(defines.events.on_gui_click, GUIDispatcher.on_event)
