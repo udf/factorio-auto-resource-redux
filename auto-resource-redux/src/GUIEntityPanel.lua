@@ -9,6 +9,7 @@ local GUIComponentSliderInput = require "src.GUIComponentSliderInput"
 local GUIDispatcher = require "src.GUIDispatcher"
 local GUIItemPriority = require "src.GUIItemPriority"
 local ItemPriorityManager = require "src.ItemPriorityManager"
+local R = require "src.RichText"
 local Storage = require "src.Storage"
 
 local GUI_CLOSE_EVENT = "arr-entity-panel-close"
@@ -207,7 +208,11 @@ local function add_gui_content(window, entity)
     local sub_frame = add_panel_frame(
       frame,
       "Item Priority [img=info]",
-      { "", ("Effects every [entity=%s] "):format(entity.name), entity.localised_name }
+      {
+        "", ("Effects every [entity=%s] "):format(entity.name), entity.localised_name,
+        "\nItems are used from left to right.\n",
+        R.HINT, { "control-keys.mouse-button-1" }, R.HINT_END, " to set item quantity.",
+      }
     )
     sub_frame.style.vertically_stretchable = false
     local inner_flow = sub_frame.add({
