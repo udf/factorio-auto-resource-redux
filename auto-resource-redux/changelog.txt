@@ -1,4 +1,25 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.3
+Date: 2024-03-08
+  Optimizations:
+    - Make entity queue update rate dynamic
+  Major Features:
+    - Automatically put (placeable) item in cursor when getting from storage
+    - Handle spidertron requests
+    - Handle AAI vehicles being deployed
+  Minor Features:
+    - Added images to README
+    - Sort items and entities in priority list by their GUI order
+    - Auto-reserve *up to* 1 stack instead of always a whole stack
+  Bugfixes:
+    - Fix UI when switching surfaces
+    - Fix conditions UI
+    - Fix crash when starting a new game
+    - Fix crash when miner's sink chest fails to be placed
+    - Fix crash when starting the PvP scenario
+    - Fix mapping of (AAI) entities
+
+---------------------------------------------------------------------------------------------------
 Version: 0.0.2
 Date: 2024-02-27
   Major Features:
