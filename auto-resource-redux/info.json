@@ -6,7 +6,8 @@
   "factorio_version": "1.1",
   "dependencies": [
       "base >= 1.1",
-      "flib >= 0.13.0"
+      "flib >= 0.13.0",
+      "?space-exploration >= 0.6.125"
   ],
   "description": "Automatic resource distribution between machines - for RTS like/combat focused gameplay"
 }
