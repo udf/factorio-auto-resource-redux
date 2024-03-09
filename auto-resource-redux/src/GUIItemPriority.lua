@@ -38,7 +38,7 @@ local function add_tab_contents(tabbed_pane, priority_sets, scroll_to_entity)
   local sort_fn = Util.prototype_order_comp_fn(
     function(entity_name)
       local entity_prototype = game.entity_prototypes[entity_name]
-      local item = entity_prototype.items_to_place_this[1]
+      local item = (entity_prototype.items_to_place_this or {})[1]
       if item then
         return game.item_prototypes[item.name]
       end
