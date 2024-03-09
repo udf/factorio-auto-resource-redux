@@ -245,19 +245,16 @@ function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
     end
   end
   inserted = insert_fluids(o, fluid_targets, 0) or inserted
+  inserted = insert_fuel(o, false) or inserted
   return inserted
 end
 
 function EntityHandlers.handle_furnace(o)
   local recipe, switched = FurnaceRecipeManager.get_new_recipe(o.entity)
-  local busy = false
-  if recipe then
-    if not o.paused then
-      busy = insert_fuel(o, false) or busy
-    end
-    busy = EntityHandlers.handle_assembler(o, recipe, switched) or busy
+  if not recipe then
+    return false
   end
-  return busy
+  return EntityHandlers.handle_assembler(o, recipe, switched)
 end
 
 function EntityHandlers.handle_lab(o)
@@ -275,6 +272,7 @@ function EntityHandlers.handle_lab(o)
     )
     inserted = inserted or (amount_inserted > 0)
   end
+  inserted = insert_fuel(o, false) or inserted
   return inserted
 end
 
