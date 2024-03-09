@@ -40,11 +40,7 @@ end
 local function recipe(name)
   return {
     enabled = true,
-    ingredients = {
-      { type = "item", name = "steel-chest",        amount = 1 },
-      { type = "item", name = "electronic-circuit", amount = 3 },
-      { type = "item", name = "advanced-circuit",   amount = 1 }
-    },
+    ingredients = {},
     name = name,
     result = name,
     type = "recipe"
