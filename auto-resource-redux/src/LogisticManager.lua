@@ -92,50 +92,53 @@ local function handle_items_request(storage, player, entity, item_requests)
     return false
   end
 
+  -- find all chests from networks that can handle the requests
   local entity_position = entity.position
-  local chest_sort_fn = function(a, b)
-    local dist_a = (entity_position.x - a.position.x) ^ 2 + (entity_position.y - a.position.y) ^ 2
-    local dist_b = (entity_position.x - b.position.x) ^ 2 + (entity_position.y - b.position.y) ^ 2
-    return dist_a < dist_b
-  end
   local nets = entity.surface.find_logistic_networks_by_construction_area(entity_position, player.force)
-  local gave_items = false
+  local chests = {}
   for _, net in ipairs(nets) do
     if net.available_construction_robots == 0 then
       goto continue
     end
 
-    -- sort chests by their distance to the alert entity
-    local chests = {}
     for _, chest in ipairs(net.storages) do
       if chest.name == "arr-logistic-sink-chest" then
         table.insert(chests, chest)
       end
     end
-    if table_size(chests) == 0 then
-      goto continue
-    end
-    table.sort(chests, chest_sort_fn)
 
-    -- place items in chests, starting from the closest one
-    for item_name, amount_to_give in pairs(item_requests) do
-      for _, chest in ipairs(chests) do
-        local inventory = chest.get_inventory(defines.inventory.chest)
-        local amount_given = Storage.put_in_inventory(storage, inventory, item_name, amount_to_give, true)
-        if amount_given > 0 then
-          gave_items = true
-          -- mark chest as busy so items don't get sucked back into storage
-          global.busy_logistic_chests[chest.unit_number] = game.tick + TICKS_PER_ALERT_TRANSFER
-        end
-        amount_to_give = amount_to_give - amount_given
-        item_requests[item_name] = amount_to_give > 0 and amount_to_give or nil
+    ::continue::
+  end
+
+  if table_size(chests) == 0 then
+    return false
+  end
+  -- sort chests by their distance to the alert's entity
+  table.sort(
+    chests,
+    function(a, b)
+      local dist_a = (entity_position.x - a.position.x) ^ 2 + (entity_position.y - a.position.y) ^ 2
+      local dist_b = (entity_position.x - b.position.x) ^ 2 + (entity_position.y - b.position.y) ^ 2
+      return dist_a < dist_b
+    end
+  )
+
+  -- place items in chests, starting from the closest one
+  local gave_items = false
+  for item_name, amount_to_give in pairs(item_requests) do
+    for _, chest in ipairs(chests) do
+      local inventory = chest.get_inventory(defines.inventory.chest)
+      local amount_given = Storage.put_in_inventory(storage, inventory, item_name, amount_to_give, true)
+      if amount_given > 0 then
+        gave_items = true
+        -- mark chest as busy so items don't get sucked back into storage
+        global.busy_logistic_chests[chest.unit_number] = game.tick + TICKS_PER_ALERT_TRANSFER
+      end
+      amount_to_give = amount_to_give - amount_given
+      if amount_to_give <= 0 then
+        break
       end
     end
-
-    if table_size(item_requests) == 0 then
-      break
-    end
-    ::continue::
   end
 
   if gave_items then
