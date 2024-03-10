@@ -26,7 +26,7 @@ local entity_queue_specs = {
   ["boiler"] = { handler = EntityHandlers.handle_boiler, ticks_per_cycle = 120 },
   ["mining-drill"] = { handler = EntityHandlers.handle_mining_drill, ticks_per_cycle = 120 },
   ["furnace"] = { handler = EntityHandlers.handle_furnace, ticks_per_cycle = 120 },
-  ["assembling-machine"] = { handler = EntityHandlers.handle_assembler, ticks_per_cycle = 120},
+  ["assembling-machine"] = { handler = EntityHandlers.handle_assembler, ticks_per_cycle = 120 },
   ["lab"] = { handler = EntityHandlers.handle_lab, ticks_per_cycle = 120 },
 }
 
@@ -115,7 +115,17 @@ function EntityManager.on_tick()
   local total_processed = 0
   for queue_key, spec in pairs(entity_queue_specs) do
     local queue = global.entity_queues[queue_key]
-    local max_updates = math.max(1, math.ceil(queue.size / (spec.ticks_per_cycle or DEFAULT_TICKS_PER_CYCLE)))
+    -- evenly distribute updates across the whole cycle
+    local ticks_per_cycle = spec.ticks_per_cycle or DEFAULT_TICKS_PER_CYCLE
+    local update_index = game.tick % ticks_per_cycle
+    local max_updates = (
+      math.floor(queue.size * (update_index + 1) / ticks_per_cycle) -
+      math.floor(queue.size * update_index / ticks_per_cycle)
+    )
+    if max_updates <= 0 then
+      goto continue
+    end
+
     local num_processed = 0
     repeat
       if queue.size == 0 then
@@ -147,7 +157,9 @@ function EntityManager.on_tick()
         busy_counters[queue_key] = 0
       end
     until num_processed >= max_updates or num_processed >= queue.size
+
     total_processed = total_processed + num_processed
+    ::continue::
   end
 end
 
