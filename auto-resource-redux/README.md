@@ -101,10 +101,10 @@ Fluids can be inserted into storage using the "Sink Tank", any fluid inserted in
 
 
 ## Construction logistics
-Items requested by construction bots will automatically be inserted into the logistics network:  
+Items requested by construction bots will automatically be inserted into the nearest "Auto Resource Storage Chest":  
 ![Bot construction](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/bot-construction.mp4)
 
-It is recommended to use the "Auto Resource Storage Chest" as its contents will automatically be sent back to your storage, this allows you to remotely collect items using construction bots:  
+The "Auto Resource Storage Chest" will automatically send its contents back to your storage when not in use, this allows you to remotely collect items using construction bots:  
 ![Bot deconstruction](https://raw.githubusercontent.com/udf/factorio-auto-resource-redux/master/images/bot-deforestation.mp4)
 
 
