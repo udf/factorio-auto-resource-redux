@@ -236,8 +236,8 @@ function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
       local amount_needed = target_amount - (input_items[ingredient.name] or 0)
       if amount_needed > 0 then
         local amount_inserted = Storage.put_in_inventory(
-          storage, ingredient.name,
-          input_inventory, amount_needed,
+          storage, input_inventory,
+          ingredient.name, amount_needed,
           o.use_reserved
         )
         inserted = inserted or (amount_inserted > 0)

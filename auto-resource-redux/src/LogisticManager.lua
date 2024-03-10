@@ -25,16 +25,16 @@ local function handle_requests(o, inventory, ammo_inventory, extra_stack)
       if amount_needed > 0 then
         if ammo_inventory and ammo_inventory.can_insert(request) then
           local inserted = Storage.put_in_inventory(
-            o.storage, item_name,
-            ammo_inventory, amount_needed,
+            o.storage, ammo_inventory,
+            item_name, amount_needed,
             o.use_reserved
           )
           amount_needed = amount_needed - inserted
           total_inserted = total_inserted + inserted
         end
         total_inserted = total_inserted + Storage.put_in_inventory(
-          o.storage, item_name,
-          inventory, amount_needed,
+          o.storage, inventory,
+          item_name, amount_needed,
           o.use_reserved
         )
       end

@@ -280,12 +280,12 @@ end
 
 --- Inserts an item into an inventory
 ---@param storage table
----@param item_name string
 ---@param inventory LuaInventory
+---@param item_name string
 ---@param amount_requested integer
 ---@param use_reserved boolean
 ---@return integer amount_given
-function Storage.put_in_inventory(storage, item_name, inventory, amount_requested, use_reserved)
+function Storage.put_in_inventory(storage, inventory, item_name, amount_requested, use_reserved)
   local amount_to_give, amount_stored = get_available_item_count(storage, item_name, amount_requested, use_reserved)
   if amount_to_give <= 0 then
     return 0
