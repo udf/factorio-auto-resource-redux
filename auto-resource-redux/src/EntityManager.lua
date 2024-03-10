@@ -199,9 +199,9 @@ function EntityManager.on_entity_removed(event, died)
         {
           entity = attached_chest,
           storage = Storage.get_storage(attached_chest),
-          use_reserved = true,
+          use_reserved = false,
         },
-        nil
+        true
       )
     end
     attached_chest.destroy({ raise_destroy = true })
