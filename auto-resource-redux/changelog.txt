@@ -1,4 +1,21 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.5
+Date: 2024-03-11
+  Optimizations:
+    - Distribute entity updates more evenly
+  Major Features:
+    - Add support for reactors
+    - Insert fuel into assemblers and labs
+    - Insert wanted construction items into *nearest* Auto Resource Storage Chest
+  Minor Features:
+    - Increase item limit to 100K and fluid limit to 1M
+    - Add locale string for copy settings control
+    - Force pickup items when mining a miner's hidden chest
+    - Make our logistic chests free #topfreedom
+  Bugfixes:
+    - Fix furnace recipe copy-paste for Space Exploration
+
+---------------------------------------------------------------------------------------------------
 Version: 0.0.4
 Date: 2024-03-09
   Bugfixes:
