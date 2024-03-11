@@ -21,7 +21,8 @@ end
 
 function FurnaceRecipeManager.can_craft(entity, recipe_name)
   local recipe_category = game.recipe_prototypes[recipe_name].category
-  return entity.prototype.crafting_categories[recipe_category] ~= nil
+  local prototype = entity.type == "entity-ghost" and game.entity_prototypes[entity.ghost_name] or entity.prototype
+  return prototype.crafting_categories[recipe_category] ~= nil
 end
 
 function FurnaceRecipeManager.clear_marks(entity_id)

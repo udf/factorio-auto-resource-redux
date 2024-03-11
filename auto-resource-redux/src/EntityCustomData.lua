@@ -123,6 +123,9 @@ function EntityCustomData.on_built(event)
 end
 
 function EntityCustomData.set_data(entity_or_ghost, new_data)
+  if new_data and new_data.furnace_recipe then
+    FurnaceRecipeManager.set_recipe(entity_or_ghost, new_data.furnace_recipe)
+  end
   if entity_or_ghost.type == "entity-ghost" then
     local tags = entity_or_ghost.tags or {}
     tags[DATA_TAG] = new_data
@@ -130,9 +133,6 @@ function EntityCustomData.set_data(entity_or_ghost, new_data)
     return
   end
   global.entity_data[entity_or_ghost.unit_number] = new_data
-  if new_data and new_data.furnace_recipe then
-    FurnaceRecipeManager.set_recipe(entity_or_ghost, new_data.furnace_recipe)
-  end
 end
 
 function EntityCustomData.on_cloned(event)
