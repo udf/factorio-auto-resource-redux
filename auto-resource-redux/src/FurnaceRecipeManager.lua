@@ -19,6 +19,11 @@ local function read_stored_furnace_recipe(entity_id)
   return game.recipe_prototypes[data.furnace_recipe]
 end
 
+function FurnaceRecipeManager.can_craft(entity, recipe_name)
+  local recipe_category = game.recipe_prototypes[recipe_name].category
+  return entity.prototype.crafting_categories[recipe_category] ~= nil
+end
+
 function FurnaceRecipeManager.clear_marks(entity_id)
   for _, mark_id in ipairs(global.furnace_marks[entity_id] or {}) do
     rendering.destroy(mark_id)

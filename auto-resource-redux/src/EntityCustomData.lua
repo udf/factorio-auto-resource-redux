@@ -228,11 +228,14 @@ function EntityCustomData.on_player_selected_area(event)
   local furnace_tool_category = event.item:match("arr%-paste%-tool%-furnace%-(.+)")
   if furnace_tool_category then
     for _, entity in ipairs(event.entities) do
-      set_data(entity, flib_table.deep_copy(src.data))
+      if FurnaceRecipeManager.can_craft(entity, src.data.furnace_recipe) then
+        set_data(entity, flib_table.deep_copy(src.data))
+      end
     end
+    return
   end
 
-  if furnace_tool_category or event.item == "arr-paste-tool-condition" then
+  if event.item == "arr-paste-tool-condition" then
     local src_data = src.data or {}
     for _, entity in ipairs(event.entities) do
       local entity_data = global.entity_data[entity.unit_number] or {}
