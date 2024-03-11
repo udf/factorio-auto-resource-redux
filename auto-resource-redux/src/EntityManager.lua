@@ -15,9 +15,9 @@ local evaluate_condition = EntityCondition.evaluate
 -- number of ticks it takes to process the whole queue
 local DEFAULT_TICKS_PER_CYCLE = 60
 local entity_queue_specs = {
-  ["sink-chest"] = { handler = EntityHandlers.handle_sink_chest, ticks_per_cycle = 180 },
-  ["sink-tank"] = { handler = EntityHandlers.handle_sink_tank, ticks_per_cycle = 120 },
+  ["sink-tank"] = { handler = EntityHandlers.handle_sink_tank },
   ["arr-requester-tank"] = { handler = EntityHandlers.handle_requester_tank },
+  ["sink-chest"] = { handler = EntityHandlers.handle_sink_chest, ticks_per_cycle = 180 },
   ["logistic-sink-chest"] = { handler = LogisticManager.handle_sink_chest },
   ["logistic-requester-chest"] = { handler = LogisticManager.handle_requester_chest },
   ["car"] = { handler = EntityHandlers.handle_car },
