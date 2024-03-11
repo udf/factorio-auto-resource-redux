@@ -41,9 +41,14 @@ function EntityCustomData.on_setup_blueprint(event)
   for id, entity in pairs(event.mapping.get()) do
     if entity.valid then
       local entity_data = global.entity_data[entity.unit_number]
+      local entity_name = entity.name
+      if entity.type == "entity-ghost" then
+        entity_data = entity_data or entity.tags[DATA_TAG]
+        entity_name = entity.ghost_name
+      end
       local blueprint_entity = blueprint_entities[id]
       if entity_data and blueprint_entity then
-        entity_data._name = entity.name
+        entity_data._name = entity_name
         table.insert(
           blueprint_entities_arr,
           {
