@@ -18,6 +18,13 @@ function EntityCustomData.initialise()
   end
 end
 
+function EntityCustomData.get_data(entity_or_ghost)
+  if entity_or_ghost.type == "entity-ghost" then
+    return (entity_or_ghost.tags or {})[DATA_TAG]
+  end
+  return global.entity_data[entity_or_ghost.unit_number]
+end
+
 function EntityCustomData.on_setup_blueprint(event)
   local player = game.players[event.player_index]
   local blueprint = player.blueprint_to_setup
@@ -40,12 +47,8 @@ function EntityCustomData.on_setup_blueprint(event)
   local changed = false
   for id, entity in pairs(event.mapping.get()) do
     if entity.valid then
-      local entity_data = global.entity_data[entity.unit_number]
-      local entity_name = entity.name
-      if entity.type == "entity-ghost" then
-        entity_data = entity_data or entity.tags[DATA_TAG]
-        entity_name = entity.ghost_name
-      end
+      local entity_data = EntityCustomData.get_data(entity)
+      local entity_name = entity.type == "entity-ghost" and entity.ghost_name or entity.name
       local blueprint_entity = blueprint_entities[id]
       if entity_data and blueprint_entity then
         entity_data._name = entity_name
@@ -141,9 +144,10 @@ function EntityCustomData.set_data(entity_or_ghost, new_data)
 end
 
 function EntityCustomData.on_cloned(event)
-  local dest_id = event.destination.unit_number
-  local src_id = event.source.unit_number
-  global.entity_data[dest_id] = flib_table.deep_copy(global.entity_data[src_id])
+  EntityCustomData.set_data(
+    event.destination,
+    flib_table.deep_copy(EntityCustomData.get_data(event.source))
+  )
 end
 
 function EntityCustomData.on_settings_pasted(event)
@@ -227,17 +231,17 @@ function EntityCustomData.on_player_selected_area(event)
   local set_data = EntityCustomData.set_data
   local src = global.entity_data_clipboard[event.player_index]
   if event.item == "arr-paste-tool-requester-tank" then
-    for _, entity in ipairs(event.entities) do
-      set_data(entity, flib_table.deep_copy(src.data))
+    for _, entity_or_ghost in ipairs(event.entities) do
+      set_data(entity_or_ghost, flib_table.deep_copy(src.data))
     end
     return
   end
 
   local furnace_tool_category = event.item:match("arr%-paste%-tool%-furnace%-(.+)")
   if furnace_tool_category then
-    for _, entity in ipairs(event.entities) do
-      if FurnaceRecipeManager.can_craft(entity, src.data.furnace_recipe) then
-        set_data(entity, flib_table.deep_copy(src.data))
+    for _, entity_or_ghost in ipairs(event.entities) do
+      if FurnaceRecipeManager.can_craft(entity_or_ghost, src.data.furnace_recipe) then
+        set_data(entity_or_ghost, flib_table.deep_copy(src.data))
       end
     end
     return
@@ -245,11 +249,11 @@ function EntityCustomData.on_player_selected_area(event)
 
   if event.item == "arr-paste-tool-condition" then
     local src_data = src.data or {}
-    for _, entity in ipairs(event.entities) do
-      local entity_data = global.entity_data[entity.unit_number] or {}
+    for _, entity_or_ghost in ipairs(event.entities) do
+      local entity_data = EntityCustomData.get_data(entity_or_ghost) or {}
       entity_data.use_reserved = src_data.use_reserved
       entity_data.condition = flib_table.deep_copy(src_data.condition)
-      set_data(entity, entity_data)
+      set_data(entity_or_ghost, entity_data)
     end
     return
   end
