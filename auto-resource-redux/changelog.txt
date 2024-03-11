@@ -1,4 +1,18 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.6
+Date: 2024-03-12
+  Optimizations:
+    - Update custom tanks at the same rate
+  Minor Features:
+    - Add fallback furnace recipe tool
+    - Only clear matching furnace recipe when shift-selecting with furnace recipe tool
+  Bugfixes:
+    - Fix fluid duplication bug
+    - Fix not adding data to blueprint when blueprinting ghosts
+    - Fix clearing requester tank's request when pasting condition onto a ghost tank
+    - Fix pasting recipe on furnace ghost
+
+---------------------------------------------------------------------------------------------------
 Version: 0.0.5
 Date: 2024-03-11
   Optimizations:

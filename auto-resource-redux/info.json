@@ -1,13 +1,14 @@
 {
   "name": "auto-resource-redux",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "title": "Auto Resource Redux",
   "author": "Samarara",
   "factorio_version": "1.1",
   "dependencies": [
       "base >= 1.1",
       "flib >= 0.13.0",
-      "?space-exploration >= 0.6.125"
+      "?space-exploration >= 0.6.125",
+      "?SchallRecipeScaling >= 1.1.0"
   ],
   "description": "Automatic resource distribution between machines - for RTS like/combat focused gameplay"
 }
