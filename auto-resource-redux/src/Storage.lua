@@ -410,9 +410,8 @@ function Storage.remove_fluid_in_temperature_range(
   local new_temperature = 0
   local amount_reserved = use_reserved and 0 or (storage.reservations[storage_key] or 0)
   for temperature, stored_amount in pairs(fluid) do
-    if temperature >= min_temp and temperature <= max_temp and stored_amount > 0 then
-      local amount_available = stored_amount - amount_reserved
-      amount_to_remove = math.min(amount_available, total_to_remove)
+    if temperature >= min_temp and temperature <= max_temp and stored_amount > amount_reserved then
+      amount_to_remove = math.min(stored_amount - amount_reserved, total_to_remove)
       fluid[temperature] = math.max(0, stored_amount - amount_to_remove)
       new_temperature = Util.weighted_average(new_temperature, total_removed, temperature, amount_to_remove)
       total_removed = total_removed + amount_to_remove
