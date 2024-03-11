@@ -12,7 +12,7 @@ local RESERVE_CHECKBOX_EVENT = "arr-limit-reserve-checked"
 local CONFIRM_BUTTON_EVENT = "arr-limit-confirm"
 local INPUT_CONFIRMED_EVENT = "arr-limit-input-confirm"
 
-local SLIDER_STEPS = { 0, 0.5, 1, 2, 3, 4, 5, 10, 15, 20, 25, 50, 75, 100, 150, 200, 250, math.huge }
+local SLIDER_STEPS = { 0, 0.5, 1, 2, 3, 4, 5, 10, 15, 20, 25, 50, 75, 100, 150, 200, 250, 500, 1000, math.huge }
 
 
 local function highlight_reslist_button(player, storage_key, state)

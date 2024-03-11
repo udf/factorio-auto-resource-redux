@@ -19,8 +19,8 @@ local blacklisted_item_types = {
 
 local DEFAULT_FLUID_LIMIT = 25000
 local DEFAULT_FLUID_RESERVATION = 2500
-Storage.MAX_FLUID_LIMIT = 100000
-Storage.MAX_ITEM_LIMIT = 10000
+Storage.MAX_FLUID_LIMIT = 1000000
+Storage.MAX_ITEM_LIMIT = 100000
 -- number of stacks for the default limits (per item subgroup)
 local default_item_subgroup_stacks = {
   ["raw-resource"] = 200,
