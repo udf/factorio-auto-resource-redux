@@ -31,7 +31,13 @@ function FurnaceRecipeManager.clear_marks(entity_id)
   global.furnace_marks[entity_id] = nil
 end
 
-function FurnaceRecipeManager.clear_pending_recipe(entity)
+function FurnaceRecipeManager.clear_pending_recipe(entity, recipe_to_clear)
+  if recipe_to_clear then
+    local stored_recipe = read_stored_furnace_recipe(entity.unit_number)
+    if stored_recipe and stored_recipe.name ~= recipe_to_clear then
+      return
+    end
+  end
   store_furnace_recipe(entity.unit_number, nil)
   FurnaceRecipeManager.clear_marks(entity.unit_number)
 end
