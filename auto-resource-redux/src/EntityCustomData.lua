@@ -194,6 +194,9 @@ local function on_copy(event, tags, player)
     local recipe = FurnaceRecipeManager.get_recipe(selected)
     if recipe then
       tool_name = "arr-paste-tool-furnace-" .. recipe.category
+      if not game.item_prototypes[tool_name] then
+        tool_name = "arr-paste-tool-furnace-arr-fallback"
+      end
       label = FurnaceRecipeManager.get_recipe_label(recipe)
     end
   end

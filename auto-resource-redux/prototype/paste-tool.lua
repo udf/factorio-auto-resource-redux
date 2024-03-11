@@ -75,3 +75,16 @@ for category, furnace_names in pairs(furnace_crafting_categories) do
     }
   ) })
 end
+
+-- fallback tool for when specific tool is missing
+-- which happens if another mod creates a category after we've created our tools
+data:extend({ gen_paste_tool(
+  "furnace-arr-fallback",
+  {
+    icon = "__auto-resource-redux__/graphics/paste-tool-recipe.png",
+    entity_type_filters = { "furnace" },
+    alt_selection_mode = { "blueprint", "same-force", "buildable-type" },
+    alt_selection_color = { 0.75, 0, 0 },
+    alt_entity_type_filters = { "furnace" }
+  }
+) })
