@@ -298,6 +298,19 @@ function EntityHandlers.handle_boiler(o)
   return insert_fuel(o, true)
 end
 
+function EntityHandlers.handle_reactor(o)
+  if o.paused then
+    return false
+  end
+  local busy = insert_fuel(o, true)
+  local result_inventory = o.entity.get_burnt_result_inventory()
+  if result_inventory then
+    local added_items = Storage.add_from_inventory(o.storage, result_inventory, false)
+    busy = table_size(added_items) > 0 or busy
+  end
+  return busy
+end
+
 function EntityHandlers.handle_turret(o)
   if o.paused then
     return false

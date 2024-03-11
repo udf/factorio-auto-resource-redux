@@ -24,6 +24,7 @@ local entity_queue_specs = {
   ["spidertron"] = { handler = LogisticManager.handle_spidertron_requests, ticks_per_cycle = 120 },
   ["ammo-turret"] = { handler = EntityHandlers.handle_turret },
   ["boiler"] = { handler = EntityHandlers.handle_boiler, ticks_per_cycle = 120 },
+  ["reactor"] = { handler = EntityHandlers.handle_reactor, ticks_per_cycle = 120 },
   ["mining-drill"] = { handler = EntityHandlers.handle_mining_drill, ticks_per_cycle = 120 },
   ["furnace"] = { handler = EntityHandlers.handle_furnace, ticks_per_cycle = 120 },
   ["assembling-machine"] = { handler = EntityHandlers.handle_assembler, ticks_per_cycle = 120 },
