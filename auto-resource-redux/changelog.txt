@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.7
+Date: 2024-03-13
+  Bugfixes:
+    - Fix crash when a fuel/ammo inventory has no slots
+    - Fix crash when clearing pending recipe with furnace recipe tool (shift-select)
+
+---------------------------------------------------------------------------------------------------
 Version: 0.0.6
 Date: 2024-03-12
   Optimizations:
