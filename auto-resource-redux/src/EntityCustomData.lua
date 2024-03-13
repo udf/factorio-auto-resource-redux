@@ -261,6 +261,7 @@ end
 
 function EntityCustomData.on_player_alt_selected_area(event)
   local furnace_tool_category = event.item:match("arr%-paste%-tool%-furnace%-(.+)")
+  local src = global.entity_data_clipboard[event.player_index]
   if furnace_tool_category then
     for _, entity in ipairs(event.entities) do
       FurnaceRecipeManager.clear_pending_recipe(entity, src.data.furnace_recipe)
