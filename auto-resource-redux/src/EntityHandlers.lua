@@ -142,7 +142,7 @@ end
 ---@return boolean inserted
 local function insert_fuel(o, default_use_reserved)
   local inventory = o.entity.get_fuel_inventory()
-  if inventory then
+  if inventory and #inventory >= 1 then
     return insert_using_priority_set(
       o, ItemPriorityManager.get_fuel_key(o.entity.name),
       inventory[1], nil,
@@ -315,11 +315,15 @@ function EntityHandlers.handle_turret(o)
   if o.paused then
     return false
   end
-  return insert_using_priority_set(
-    o, ItemPriorityManager.get_ammo_key(o.entity.name, 1),
-    o.entity.get_inventory(defines.inventory.turret_ammo)[1], nil,
-    true
-  )
+  local inventory = o.entity.get_inventory(defines.inventory.turret_ammo)
+  if inventory and #inventory >= 1 then
+    return insert_using_priority_set(
+      o, ItemPriorityManager.get_ammo_key(o.entity.name, 1),
+      inventory[1], nil,
+      true
+    )
+  end
+  return false
 end
 
 function EntityHandlers.handle_car(o)
