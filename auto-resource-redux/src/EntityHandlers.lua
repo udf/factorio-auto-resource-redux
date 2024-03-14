@@ -169,6 +169,7 @@ function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
   if o.paused then
     return false
   end
+  local inserted = insert_fuel(o, false)
   -- check if we should craft
   if entity.is_crafting() and (1 - entity.crafting_progress) * (recipe.energy / entity.crafting_speed) > TARGET_INGREDIENT_CRAFT_TIME then
     return false
@@ -227,7 +228,6 @@ function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
 
   -- insert ingredients
   local fluid_targets = {}
-  local inserted = false
   for _, ingredient in ipairs(recipe.ingredients) do
     local target_amount = math.ceil(ingredient.amount) * ingredient_multiplier
     if ingredient.type == "fluid" then
@@ -245,7 +245,6 @@ function EntityHandlers.handle_assembler(o, override_recipe, clear_inputs)
     end
   end
   inserted = insert_fluids(o, fluid_targets, 0) or inserted
-  inserted = insert_fuel(o, false) or inserted
   return inserted
 end
 
