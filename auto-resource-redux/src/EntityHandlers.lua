@@ -3,8 +3,9 @@ local EntityHandlers = {}
 -- seconds to attempt to keep assemblers fed for
 local TARGET_INGREDIENT_CRAFT_TIME = 2
 
-local ItemPriorityManager = require "src.ItemPriorityManager"
 local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
+local ItemPriorityManager = require "src.ItemPriorityManager"
+local LogisticManager = require "src.LogisticManager"
 local Storage = require "src.Storage"
 local Util = require "src.Util"
 
@@ -325,12 +326,12 @@ function EntityHandlers.handle_turret(o)
   return false
 end
 
-function EntityHandlers.handle_car(o)
+function EntityHandlers.handle_car(o, ammo_inventory_id)
   if o.paused then
     return false
   end
   local busy = insert_fuel(o, true)
-  local ammo_inventory = o.entity.get_inventory(defines.inventory.car_ammo)
+  local ammo_inventory = o.entity.get_inventory(ammo_inventory_id or defines.inventory.car_ammo)
   if ammo_inventory then
     for i = 1, #ammo_inventory do
       busy = insert_using_priority_set(
@@ -341,6 +342,11 @@ function EntityHandlers.handle_car(o)
     end
   end
   return busy
+end
+
+function EntityHandlers.handle_spidertron(o)
+  local busy = EntityHandlers.handle_car(o, defines.inventory.spider_ammo)
+  return LogisticManager.handle_spidertron_requests(o) or busy
 end
 
 function EntityHandlers.handle_sink_chest(o, ignore_limit)

@@ -97,11 +97,6 @@ local function create_default_priority_sets()
     if entity_name_mapping[entity_name] ~= nil then
       goto continue
     end
-    -- spiders' logistic requests should be used instead of priority insertion
-    -- TODO: find out how to detect a spider-vehicle with no logistics, instead of assuming all of them support it
-    if entity.type == "spider-vehicle" then
-      goto continue
-    end
 
     local attack_parameters = entity.attack_parameters or {}
     -- ammo for turrets
