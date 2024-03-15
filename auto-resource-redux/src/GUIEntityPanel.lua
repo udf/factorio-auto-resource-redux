@@ -29,6 +29,7 @@ local EntityTypeGUIAnchors = {
   ["lab"] = defines.relative_gui_type.lab_gui,
   ["mining-drill"] = defines.relative_gui_type.mining_drill_gui,
   ["boiler"] = defines.relative_gui_type.entity_with_energy_source_gui,
+  ["artillery-turret"] = defines.relative_gui_type.container_gui,
   ["ammo-turret"] = defines.relative_gui_type.container_gui,
   ["reactor"] = defines.relative_gui_type.reactor_gui,
   ["storage-tank"] = defines.relative_gui_type.storage_tank_gui,

@@ -9,6 +9,7 @@ EntityGroups.entity_group_filters = {
   ["boiler"] =  { filter = "type", type = "boiler" },
   ["furnace"] =  { filter = "type", type = "furnace" },
   ["mining-drill"] =  { filter = "type", type = "mining-drill" },
+  ["artillery-turret"] =  { filter = "type", type = "artillery-turret" },
   ["ammo-turret"] =  { filter = "type", type = "ammo-turret" },
   ["assembling-machine"] =  { filter = "type", type = "assembling-machine" },
   ["lab"] =  { filter = "type", type = "lab" },
