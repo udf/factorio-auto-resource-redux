@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.8
+Date: 2024-03-15
+  Major Features:
+    - Add item priority support for all spidertrons
+    - Add support for artillery turrets
+  Bugfixes:
+    - Fix not inserting fuel into assemblers/furnaces in certain cases
+
+---------------------------------------------------------------------------------------------------
 Version: 0.0.7
 Date: 2024-03-13
   Bugfixes:
