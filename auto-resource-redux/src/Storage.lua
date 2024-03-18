@@ -6,14 +6,12 @@ local Util = require "src.Util"
 
 -- Don't store items that contain extra data, because the data would be lost
 local blacklisted_item_types = {
-  ["armor"] = true,
   ["deconstruction-item"] = true,
   ["blueprint"] = true,
   ["upgrade-item"] = true,
   ["blueprint-book"] = true,
   ["spidertron-remote"] = true,
   ["item-with-inventory"] = true,
-  ["item-with-entity-data"] = true,
   ["item-with-tags"] = true
 }
 
@@ -28,10 +26,14 @@ local default_item_subgroup_stacks = {
   ["intermediate-product"] = 2.5,
   ["energy-pipe-distribution"] = 2,
   ["terrain"] = 10,
-  ["ammo"] = 5
+  ["ammo"] = 5,
+  ["transport"] = 10
 }
 
 local blacklisted_items = {}
+-- Items that contain other items (equipment grids) can be decomposed and stored
+-- these include armours and vehicles (type == item-with-entity-data)
+local decomposable_items = {}
 
 local function default_storage(domain_key)
   return {
@@ -49,6 +51,11 @@ function Storage.get_storage(entity)
 end
 
 function Storage.initialise()
+  for name, item in pairs(game.item_prototypes) do
+    if (item.type == "armor" and item.equipment_grid) or item.type == "item-with-entity-data" then
+      decomposable_items[name] = true
+    end
+  end
   for name, item in pairs(game.item_prototypes) do
     if blacklisted_item_types[item.type] ~= nil then
       blacklisted_items[name] = true
@@ -240,6 +247,38 @@ local function add_item_or_fluid(storage, item_or_fluid_name, amount, ignore_lim
   return new_amount - (amount_stored or 0)
 end
 
+local function decompose_and_store_stack(storage, stack, ignore_limit)
+  local amount_to_store = stack.count
+  if not ignore_limit then
+    local limit = Storage.get_item_limit(storage, stack.name)
+    local amount_stored = storage.items[stack.name] or 0
+    amount_to_store = Util.clamp(limit - amount_stored, 0, amount_to_store)
+  end
+  if amount_to_store <= 0 then
+    return 0
+  end
+
+  -- empty out equipment grid into storage
+  if stack.grid then
+    for i, equipment in ipairs(stack.grid.equipment) do
+      if equipment.burner then
+        Storage.add_from_inventory(storage, equipment.burner.inventory, true)
+      end
+      add_item_or_fluid(storage, equipment.name, 1, true)
+    end
+  end
+  add_item_or_fluid(storage, stack.name, amount_to_store, true)
+
+  local amount_remaining = stack.count - amount_to_store
+  if amount_remaining <= 0 then
+    stack.clear()
+  else
+    stack.count = amount_remaining
+  end
+
+  return amount_to_store
+end
+
 --- Items
 
 --- Adds items from an inventory
@@ -251,7 +290,24 @@ end
 function Storage.add_from_inventory(storage, inventory, ignore_limit)
   local added_items = {}
   local remaining_items = {}
+  local items_to_decompose = {}
   for item, amount in pairs(inventory.get_contents()) do
+    if decomposable_items[item] then
+      local amount_can_store = (
+        ignore_limit and amount
+        or math.max(0, Storage.get_item_limit(storage, item) - (storage.items[item] or 0))
+      )
+      local amount_to_store = math.min(amount, amount_can_store)
+      if amount_to_store > 0 then
+        items_to_decompose[item] = amount_to_store
+        added_items[item] = amount_to_store
+      end
+      local amount_remaining = amount - amount_to_store
+      if amount_remaining > 0 then
+        remaining_items[item] = amount_remaining
+      end
+      goto continue
+    end
     local amount_added = add_item_or_fluid(storage, item, amount, ignore_limit)
     if amount_added > 0 then
       inventory.remove({ name = item, count = amount_added })
@@ -261,7 +317,18 @@ function Storage.add_from_inventory(storage, inventory, ignore_limit)
     if amount_remaining > 0 then
       remaining_items[item] = amount_remaining
     end
+    ::continue::
   end
+
+  for item, amount in pairs(items_to_decompose) do
+    for i = 1, amount do
+      local stack = inventory.find_item_stack(item)
+      if stack then
+        decompose_and_store_stack(storage, stack, true)
+      end
+    end
+  end
+
   return added_items, remaining_items
 end
 
@@ -307,13 +374,8 @@ function Storage.add_to_or_replace_stack(storage, item_name, stack, target_count
   -- try to clear if the item is different
   local stack_count = stack.count
   if stack_count > 0 and stack.name ~= item_name then
-    local amount_removed = add_item_or_fluid(storage, stack.name, stack_count, ignore_limit)
-    stack_count = stack_count - amount_removed
-    if stack_count > 0 and amount_removed > 0 then
-      stack.set_stack({ name = stack.name, count = stack_count })
-    elseif stack_count == 0 then
-      stack.clear()
-    end
+    decompose_and_store_stack(storage, stack, ignore_limit)
+    stack_count = stack.count
     if stack_count > 0 then
       return 0
     end
