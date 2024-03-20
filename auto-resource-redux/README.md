@@ -97,7 +97,7 @@ Fluids can be inserted into storage using the "Sink Tank", any fluid inserted in
 
 ## Logistics
 - Logistic and trash requests from players are automatically fulfilled.
-- Items can be requested using the "Auto Resource Requester Chest", this is useful if you want to insert items into something that this mod does currently support.
+- Items can be requested using the "Auto Resource Requester Chest", this is useful if you want to insert items into something that this mod does not currently support.
 
 
 ## Construction logistics
