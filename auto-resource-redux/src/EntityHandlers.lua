@@ -9,6 +9,7 @@ local FurnaceRecipeManager = require "src.FurnaceRecipeManager"
 local ItemPriorityManager = require "src.ItemPriorityManager"
 local LogisticManager = require "src.LogisticManager"
 local Storage = require "src.Storage"
+local FluidBoxScan = require "src.FluidBoxScan"
 local Util = require "src.Util"
 
 local function store_fluids(storage, entity, prod_type_pattern, ignore_limit)
@@ -385,7 +386,15 @@ end
 
 function EntityHandlers.handle_requester_tank(o)
   local data = global.entity_data[o.entity.unit_number]
-  if not data or o.paused then
+  -- autoconfig
+  if data == nil or not data.fluid then
+    data = data or {}
+    if not FluidBoxScan.autoconfig_request(o.entity, data) then
+      return false
+    end
+    global.entity_data[o.entity.unit_number] = data
+  end
+  if o.paused then
     return false
   end
   local fluid = o.entity.fluidbox[1]
@@ -393,9 +402,6 @@ function EntityHandlers.handle_requester_tank(o)
     Storage.add_fluid(o.storage, fluid, true)
     o.entity.fluidbox[1] = nil
     fluid = nil
-  end
-  if not data.fluid then
-    return false
   end
   fluid = fluid or {
     name = data.fluid,

@@ -2,6 +2,7 @@ local GUIRequesterTank = {}
 local GUICommon = require "src.GUICommon"
 local GUIDispatcher = require "src.GUIDispatcher"
 local GUIComponentSliderInput = require "src.GUIComponentSliderInput"
+local FluidBoxScan            = require "src.FluidBoxScan"
 
 local GUI_CLOSE_EVENT = "arr-requester-tank-close"
 local FLUID_CHANGED_EVENT = "arr-requester-tank-fluid"
@@ -204,6 +205,11 @@ local function open_gui(entity, player)
       tags = { id = unit_number, event = { [MAX_TEMP_CHANGED_EVENT] = true } }
     }
   )
+
+  local data = global.entity_data[unit_number]
+  if not data.fluid then
+    FluidBoxScan.autoconfig_request(entity, data)
+  end
 
   update_controls(entity.unit_number, controls_flow)
 end
