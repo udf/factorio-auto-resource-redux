@@ -105,10 +105,12 @@ local function handle_items_request(storage, force, entity, item_requests)
   local entity_position = entity.position
   local nets = entity.surface.find_logistic_networks_by_construction_area(entity_position, force)
   local chests = {}
+  local avail_net
   for _, net in ipairs(nets) do
     if net.available_construction_robots == 0 then
       goto continue
     end
+    avail_net = net
 
     for _, chest in ipairs(net.storages) do
       if chest.name == "arr-logistic-sink-chest" then
@@ -125,7 +127,7 @@ local function handle_items_request(storage, force, entity, item_requests)
     ::continue::
   end
 
-  if table_size(chests) == 0 then
+  if table_size(chests) == 0 and avail_net == nil then
     return false
   end
   -- sort chests by their distance to the alert's entity
@@ -151,6 +153,15 @@ local function handle_items_request(storage, force, entity, item_requests)
       amount_to_give = amount_to_give - amount_given
       if amount_to_give <= 0 then
         break
+      end
+    end
+
+    -- if there is still some left, just insert it anywhere in the network
+    if amount_to_give > 0 and avail_net ~= nil then
+      local amount_given = avail_net.insert({ name=item_name, count=amount_to_give })
+      if amount_given > 0 then
+        gave_items = true
+        amount_to_give = amount_to_give - amount_given
       end
     end
   end
