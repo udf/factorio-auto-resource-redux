@@ -245,6 +245,8 @@ local function add_item_or_fluid(storage, item_or_fluid_name, amount, ignore_lim
   local new_amount = Util.clamp((amount_stored or 0) + amount, 0, math.max((amount_stored or 0), item_limit))
   if temperature then
     local fluid = storage.items[item_or_fluid_name] or {}
+    --- temperature is a float, so we need to round to an integer due to float error
+    temperature = math.floor(temperature)
     fluid[temperature] = new_amount
     storage.items[item_or_fluid_name] = fluid
   else
